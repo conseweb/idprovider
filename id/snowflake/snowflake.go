@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package id
+package snowflake
 
 import (
 	"errors"
@@ -25,12 +25,12 @@ import (
 // a distributed unique id generator inspired by Twitter's Snowflake
 
 const (
-	BitLenTime      = 39                               // bit length of time
-	BitLenSequence  = 8                                // bit length of sequence number
+	BitLenTime      = 41                               // bit length of time
+	BitLenSequence  = 12                               // bit length of sequence number
 	BitLenMachineID = 63 - BitLenTime - BitLenSequence // bit length of machine id
 )
 
-type SfSettings struct {
+type Settings struct {
 	StartTime      time.Time
 	MachineID      func() (uint64, error)
 	CheckMachineID func(uint64) bool
@@ -44,7 +44,7 @@ type Snowflake struct {
 	machineID   uint64
 }
 
-func NewSnowflake(st *SfSettings) *Snowflake {
+func NewSnowflake(st *Settings) *Snowflake {
 	sf := &Snowflake{
 		l:        &sync.Mutex{},
 		sequence: uint64(1<<BitLenSequence - 1),

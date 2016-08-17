@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package id
+package snowflake
 
 import (
 	"gopkg.in/check.v1"
@@ -35,7 +35,7 @@ type SnowflakeTest struct {
 var _ = check.Suite(&SnowflakeTest{})
 
 func (this *SnowflakeTest) SetUpSuite(c *check.C) {
-	st := &SfSettings{
+	st := &Settings{
 		StartTime: time.Now(),
 	}
 
