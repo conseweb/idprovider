@@ -1,0 +1,69 @@
+idprovider:
+  server:
+    addr: :13268
+  snowflake:
+    # snowflake setting, farmat: 2016/08/16 16:35:00(default), local location just ok
+    startTime: 2016/08/16 16:35:00
+    # machine id, value can be [0, 1024), must be set
+    machineID: 0
+  ca:
+    # certificate subject organization
+    organization: mojing
+    # certificate subject country
+    country: china
+    # where to put file
+    path: ./testdata
+    # using mysql as backend persistent
+    db:
+      # dsn as mysql connection string, format as user:pwd@tcp(ip:port)/dbname?charset=utf8&parseTime=True&loc=Local
+      # dsn: root:!QAZ1qaz@tcp(127.0.0.1:3306)/idprovider?charset=utf8&parseTime=True&loc=Local
+      # the maximum number of open connections to the database. If <= 0, then there is no limit on the number of open connections.
+      maxOpen: 0
+      # the maximum number of connections in the idle connection pool. If <= 0, no idle connections are retained.
+      maxIdle: 0
+  aca:
+      attributes:
+          attribute-entry-0: test_user0;bank_a;company;ACompany;2015-01-01T00:00:00-03:00;;
+          attribute-entry-1: test_user0;bank_a;position;Software Staff;2015-01-01T00:00:00-03:00;2015-07-12T23:59:59-03:00;
+          attribute-entry-2: test_user0;bank_a;position;Software Engineer;2015-07-13T00:00:00-03:00;;
+          attribute-entry-3: test_user0;bank_a;business_unit;Sales;2015-06-24T00:00:00-03:00;;
+      address: localhost:13268
+      server-name: acap
+      enabled: true
+  eca:
+    affiliations:
+      banks_and_institutions:
+        banks:
+          - bank_a
+          - bank_b
+          - bank_c
+        institutions:
+          - institution_a
+    users:
+      # <EnrollmentID>: <system_role (1:client, 2: peer, 4: validator, 8: auditor)> <EnrollmentPWD> <Affiliation> <Affiliation_Role>
+      admin: 1 Xurw3yU9zI0l institution_a '{"registrar":{"roles":["client","peer","validator","auditor"],"delegateRoles":["client"]}}'
+      WebAppAdmin: 1 DJY27pEnl16d institution_a '{"registrar":{"roles":["client"]}}'
+      system_chaincode_invoker: 1 DRJ20pEql15a institution_a
+      jim: 1 6avZQLwcUe9b bank_a
+      lukas: 1 NPKYL39uKbkj bank_a
+
+      test_user0: 1 MS9qrN8hFjlE bank_a
+      test_user1: 1 jGlNl6ImkuDo institution_a
+      test_user2: 1 zMflqOKezFiA bank_c
+      test_user3: 1 vWdLCE00vJy0 bank_a
+      test_user4: 1 4nXSrfoYGFCP institution_a
+      test_user5: 1 yg5DVhm0er1z bank_b
+      test_user6: 1 b7pmSxzKNFiw bank_a
+      test_user7: 1 YsWZD4qQmYxo institution_a
+      test_user8: 1 W8G0usrU7jRk bank_a
+      test_user9: 1 H80SiB5ODKKQ institution_a
+
+security:
+    # Can be 256 or 384
+    # Must be the same as in core.yaml
+    level: 256
+
+    # Can be SHA2 or SHA3
+    # Must be the same as in core.yaml
+    hashAlgorithm: SHA3
+
