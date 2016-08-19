@@ -13,23 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package ca
+package captcha
 
 import (
-	"errors"
-	pb "github.com/conseweb/idprovider/protos"
-	mrand "math/rand"
+	"math/rand"
 	"time"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const (
 	letterIdxBits = 6                    // 6 bits to represent a letter index
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var rnd = mrand.NewSource(time.Now().UnixNano())
+var rnd = rand.NewSource(time.Now().UnixNano())
 
 func randomString(n int) string {
 	b := make([]byte, n)
@@ -47,19 +45,4 @@ func randomString(n int) string {
 	}
 
 	return string(b)
-}
-
-//
-// MemberRoleToString converts a member role representation from int32 to a string,
-// according to the Role enum defined in ca.proto.
-//
-func MemberRoleToString(role pb.Role) (string, error) {
-	roleMap := pb.Role_name
-
-	roleStr := roleMap[int32(role)]
-	if roleStr == "" {
-		return "", errors.New("Undefined user role passed.")
-	}
-
-	return roleStr, nil
 }

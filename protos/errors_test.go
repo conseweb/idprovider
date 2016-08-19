@@ -13,38 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package ca
+package protos
 
 import (
-	"testing"
 	"gopkg.in/check.v1"
 )
 
-func Test(t *testing.T)  {
-	check.TestingT(t)
+func (t *TestProtos) TestResponseOK(c *check.C) {
+	ok := ResponseOK()
+	c.Check(ok.OK(), check.Equals, true)
 }
 
-type TestUtils struct {
+func (t *TestProtos) TestNewError(c *check.C) {
+	c.Check(NewError(ErrorType_NONE_ERROR, "ok").OK(), check.Equals, true)
+	c.Check(NewError(ErrorType_INVALID_PARAM, "not ok").OK(), check.Equals, false)
 }
 
-var _ = check.Suite(&TestUtils{})
-
-func (t *TestUtils) TestRandomString(c *check.C) {
-	c.Check(len(randomString(10)), check.Equals, 10)
-}
-
-func (t *TestUtils) BenchmarkRandomString(c *check.C) {
-	for i := 0; i < c.N; i++ {
-		randomString(12)
-	}
-}
-
-func (t *TestUtils) TestRemoveQuotes(c *check.C) {
-	c.Check(removeQuotes(`'abc'`), check.Equals, "abc")
-}
-
-func (t *TestUtils) BenchmarkRemoveQuotes(c *check.C) {
-	for i := 0; i < c.N; i++ {
-		removeQuotes(`'BenchmarkRemoveQuotes'`)
-	}
+func (t *TestProtos) TestNewErrorf(c *check.C) {
+	c.Check(NewError(ErrorType_INVALID_PARAM, "not ok").Message, check.Equals, "not ok")
 }
