@@ -80,6 +80,12 @@ func (s *sqliteImpl) initDB() error {
 }
 
 func (s *sqliteImpl) isUserExist(username string) bool {
+	var row int
+	if err := s.db.QueryRow("SELECT row FROM users WHERE email = ? or mobile = ?", username, username).Scan(&row); err != nil {
+		dbLogger.Errorf("select user return error: %v", err)
+		return true
+	}
+
 	return false
 }
 
