@@ -27,11 +27,12 @@ enum SignUpType {
 // User class
 // not for orm, just for easy code
 message User {
-    string email = 1;
-    string mobile = 2;
-    string pass = 3; // the pass using algo brypt(md5(user pass)), user pass can also be user real pass's md5
-    string nick = 4;
-    repeated Device devices = 5; // every user can hold lots of device, but now may be just one.
+    string userID = 1;
+    string email = 2;
+    string mobile = 3;
+    string pass = 4; // the pass using algo brypt(md5(user pass)), user pass can also be user real pass's md5
+    string nick = 5;
+    repeated Device devices = 6; // every user can hold lots of device, but now may be just one.
 }
 
 // device OS

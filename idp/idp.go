@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/gomail.v2"
 	"html/template"
+	"strconv"
 	"time"
 )
 
@@ -203,6 +204,13 @@ func (idp *IDP) encodePass(pass string) string {
 
 // register a user into db
 func (idp *IDP) registerUser(user *pb.User) (*pb.User, error) {
+	nextID, err := idp.sf.NextID()
+	if err != nil {
+		idpLogger.Errorf("snowfilake id generator error: %v", err)
+		return nil, err
+	}
+
+	user.UserID = strconv.Itoa(int(nextID))
 	user.Pass = idp.encodePass(user.Pass)
 	return idp.db.registerUser(user)
 }

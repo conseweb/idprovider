@@ -81,8 +81,7 @@ func (s *sqliteImpl) initDB() error {
 
 func (s *sqliteImpl) isUserExist(username string) bool {
 	var row int
-	if err := s.db.QueryRow("SELECT row FROM users WHERE email = ? or mobile = ?", username, username).Scan(&row); err != nil {
-		dbLogger.Errorf("select user return error: %v", err)
+	if s.db.QueryRow("SELECT row FROM users WHERE email = ? or mobile = ?", username, username).Scan(&row); row > 0 {
 		return true
 	}
 
@@ -90,6 +89,11 @@ func (s *sqliteImpl) isUserExist(username string) bool {
 }
 
 func (s *sqliteImpl) registerUser(user *pb.User) (*pb.User, error) {
+	if _, err := s.db.Exec("INSERT INTO users(id, email, mobile, nick, pass) VALUES(?, ?, ?, ?, ?)", user.UserID, user.Email, user.Mobile, user.Nick, user.Pass); err != nil {
+		dbLogger.Errorf("insert into user db error: %v", err)
+		return nil, err
+	}
+
 	return user, nil
 }
 

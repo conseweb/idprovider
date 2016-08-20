@@ -109,7 +109,7 @@ func sleepTime(overtime int64) time.Duration {
 }
 
 func toSnowflakeTime(t time.Time) int64 {
-	return t.UTC().UnixNano()
+	return t.UTC().UnixNano() / 1e7
 }
 
 func privateIPv4() (net.IP, error) {
