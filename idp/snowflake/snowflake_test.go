@@ -35,8 +35,10 @@ type SnowflakeTest struct {
 var _ = check.Suite(&SnowflakeTest{})
 
 func (this *SnowflakeTest) SetUpSuite(c *check.C) {
+	t, err := time.Parse("2006/01/02 15:04:05", "2016/08/16 16:35:00")
+	c.Check(err, check.IsNil)
 	st := &Settings{
-		StartTime: time.Now(),
+		StartTime: t,
 	}
 
 	this.sf = NewSnowflake(st)

@@ -91,5 +91,33 @@ func (t *TestIDP) TestVerifyCaptchaWrong(c *check.C) {
 }
 
 func (t *TestIDP) TestRegisterUser(c *check.C) {
-	c.Skip("not impl")
+	conn, err := NewClientConnectionWithAddress(viper.GetString("server.port"), false, false, nil)
+	c.Check(err, check.IsNil)
+	defer conn.Close()
+
+	idppcli := pb.NewIDPPClient(conn)
+
+	// test1
+	rsp1, err1 := idppcli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+		SignUpType: pb.SignUpType_MOBILE,
+		SignUp: "13800000000",
+		Nick: "13800000000",
+		Pass: "13800000000",
+	})
+	c.Check(err1, check.IsNil)
+	c.Check(rsp1, check.NotNil)
+	c.Check(rsp1.Error.OK(), check.Equals, true)
+	c.Check(rsp1.User.Nick, check.Equals, "13800000000")
+
+	// test2
+	rsp2, err2 := idppcli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+		SignUpType: pb.SignUpType_MOBILE,
+		SignUp: "13800000000",
+		Nick: "13800000000",
+		Pass: "13800000000",
+	})
+	c.Check(err2, check.IsNil)
+	c.Check(rsp2, check.NotNil)
+	c.Check(rsp2.Error.OK(), check.Equals, false)
+	c.Check(rsp2.Error.Error(), check.Equals, "Error[ALREADY_SIGNUP]: 13800000000 is already a user")
 }

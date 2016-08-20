@@ -23,6 +23,7 @@ import (
 	"net"
 	"testing"
 	"time"
+	"os"
 )
 
 func Test(t *testing.T) {
@@ -52,4 +53,7 @@ func (t *TestIDP) SetUpSuite(c *check.C) {
 func (t *TestIDP) TearDownSuite(c *check.C) {
 	time.Sleep(time.Second)
 	c.Check(t.id.Stop(), check.IsNil)
+	if viper.GetString("db.driver.name") == "sqlite3" {
+		os.Remove(viper.GetString("db.driver.dsn"))
+	}
 }
