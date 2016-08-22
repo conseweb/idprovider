@@ -50,7 +50,7 @@ func (this *SnowflakeTest) SetUpSuite(c *check.C) {
 }
 
 func (this *SnowflakeTest) TestNextID(c *check.C) {
-	_, err := this.sf.NextID()
+	_, err := this.sf.NextID(1, 0)
 	c.Check(err, check.IsNil)
 }
 
@@ -62,7 +62,7 @@ func (this *SnowflakeTest) TestSnowflakeInParallel(c *check.C) {
 	const numID = 10000
 	generate := func() {
 		for i := 0; i < numID; i++ {
-			id, err := this.sf.NextID()
+			id, err := this.sf.NextID(1, 0)
 			c.Check(err, check.IsNil)
 
 			consumer <- id
@@ -89,6 +89,6 @@ func (this *SnowflakeTest) TestSnowflakeInParallel(c *check.C) {
 
 func (this *SnowflakeTest) BenchmarkNextID(c *check.C) {
 	for i := 0; i <= c.N; i++ {
-		this.sf.NextID()
+		this.sf.NextID(1, 0)
 	}
 }

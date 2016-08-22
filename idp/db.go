@@ -22,6 +22,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/op/go-logging"
 	"github.com/spf13/viper"
+	"os"
+	"path/filepath"
 )
 
 var (
@@ -36,12 +38,23 @@ type dbAdapter interface {
 }
 
 type sqliteImpl struct {
-	db *sql.DB
+	db     *sql.DB
+	dbpath string
 }
 
-func newSQLiteDB(dbFile string) dbAdapter {
+func newSQLiteDB() dbAdapter {
 	flogging.LoggingInit("db")
-	db, err := sql.Open("sqlite3", dbFile)
+
+	dbLogger.Info("using sqlite3 as dbAdapter...")
+	dbPath := viper.GetString("db.sqlite3.dbpath")
+	if _, err := os.Stat(dbPath); err != nil {
+		dbLogger.Info("Fresh start; creating databases")
+		if err := os.MkdirAll(dbPath, 0755); err != nil {
+			dbLogger.Fatal(err)
+		}
+	}
+
+	db, err := sql.Open("sqlite3", filepath.Join(dbPath, "idprovider.db"))
 	if err != nil {
 		dbLogger.Fatalf("open sqlite3 db error: %v", err)
 	}
@@ -53,10 +66,9 @@ func newSQLiteDB(dbFile string) dbAdapter {
 	db.SetMaxIdleConns(viper.GetInt("db.maxIdle"))
 	db.SetMaxOpenConns(viper.GetInt("db.maxOpen"))
 
-	dbLogger.Infof("using sqlite3 db[%s] as dbAdapter...", dbFile)
-
 	return &sqliteImpl{
-		db: db,
+		db:     db,
+		dbpath: dbPath,
 	}
 }
 

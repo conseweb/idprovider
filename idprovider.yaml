@@ -189,7 +189,7 @@ pki:
 snowflake:
     # snowflake setting, farmat: 2016/08/16 16:35:00(default), local location just ok
     startTime: 2016/08/16 16:35:00
-    # machine id, value can be [0, 1024), must be set
+    # machine id, value can be [0, 32), must be set
     machineID: 0
 
 captcha:
@@ -211,10 +211,12 @@ mail:
     captchaEmailSubject: please verify your email
 
 db:
-    # which db backend used to store records, default is sqlite3, which require a db file
-    driver:
-      name: sqlite3
-      dsn: /tmp/idprovider/idprovider.db
+    # which db backend used to store records, default is sqlite3
+    driver: sqlite3
+    # sqlite3 db backend used to store records, if driver is sqlite3, this section is required.
+    sqlite3:
+      # where to store db file
+      dbpath: /tmp/idprovider
     # the maximum number of connections in the idle connection pool. If <= 0, no idle connections are retained.
     maxIdle: 10
     # the maximum number of open connections to the database. If <= 0, then there is no limit on the number of open connections.
