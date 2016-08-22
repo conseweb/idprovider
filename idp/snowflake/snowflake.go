@@ -23,12 +23,23 @@ import (
 )
 
 // a distributed unique id generator inspired by Twitter's Snowflake
-
 const (
-	BitLenTime      = 41                               // bit length of time
-	BitLenSequence  = 12                               // bit length of sequence number
-	BitLenMachineID = 63 - BitLenTime - BitLenSequence // bit length of machine id
+	BitLenRole      = 3                                                          // bit length of role
+	BitLenArea      = 6                                                          // bit length of area
+	BitLenTime      = 43                                                         // bit length of time
+	BitLenSequence  = 6                                                          // bit length of sequence number
+	BitLenMachineID = 63 - BitLenRole - BitLenArea - BitLenTime - BitLenSequence // bit length of machine id
 )
+
+var (
+	sf *Snowflake
+)
+
+func init() {
+	sf = NewSnowflake(&Settings{
+		StartTime: time.Date(2016, 8, 16, 16, 35, 0, 0, time.UTC),
+	})
+}
 
 type Settings struct {
 	StartTime      time.Time
@@ -74,7 +85,11 @@ func NewSnowflake(st *Settings) *Snowflake {
 	return sf
 }
 
-func (sf *Snowflake) NextID() (uint64, error) {
+// NextID using default snowflake to generate id
+func NextID(role, area int64) (uint64, error) {
+	return sf.NextID(role, area)
+}
+func (sf *Snowflake) NextID(role, area int64) (uint64, error) {
 	const maskSequence = uint64(1<<BitLenSequence - 1)
 
 	sf.l.Lock()
@@ -93,15 +108,20 @@ func (sf *Snowflake) NextID() (uint64, error) {
 		}
 	}
 
-	return sf.toID()
+	return sf.toID(role, area)
 }
 
-func (sf *Snowflake) toID() (uint64, error) {
+func (sf *Snowflake) toID(role, area int64) (uint64, error) {
 	if sf.elapsedTime >= 1<<BitLenTime {
 		return 0, errors.New("over the time limit")
 	}
 
-	return uint64(sf.elapsedTime)<<(BitLenSequence+BitLenMachineID) | sf.sequence<<BitLenMachineID | sf.machineID, nil
+	return uint64(role<<(BitLenArea+BitLenTime+BitLenSequence+BitLenMachineID)) |
+			uint64(area<<(BitLenTime+BitLenSequence+BitLenMachineID)) |
+			uint64(sf.elapsedTime)<<(BitLenSequence+BitLenMachineID) |
+			sf.sequence<<BitLenMachineID |
+			sf.machineID,
+		nil
 }
 
 func sleepTime(overtime int64) time.Duration {

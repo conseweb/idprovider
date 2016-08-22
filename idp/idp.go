@@ -23,12 +23,13 @@ import (
 	pb "github.com/conseweb/idprovider/protos"
 	"github.com/hyperledger/fabric/flogging"
 	"github.com/op/go-logging"
+	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"gopkg.in/gomail.v2"
 	"html/template"
-	"strconv"
+	"strings"
 	"time"
 )
 
@@ -88,9 +89,9 @@ func NewIDP() *IDP {
 	// init db
 	idpLogger.Info("IDP init db")
 	var db dbAdapter
-	switch viper.GetString("db.driver.name") {
+	switch viper.GetString("db.driver") {
 	case "sqlite3":
-		db = newSQLiteDB(viper.GetString("db.driver.dsn"))
+		db = newSQLiteDB()
 	}
 	if err := db.initDB(); err != nil {
 		idpLogger.Fatalf("IDP init db error: %v", err)
@@ -204,13 +205,7 @@ func (idp *IDP) encodePass(pass string) string {
 
 // register a user into db
 func (idp *IDP) registerUser(user *pb.User) (*pb.User, error) {
-	nextID, err := idp.sf.NextID()
-	if err != nil {
-		idpLogger.Errorf("snowfilake id generator error: %v", err)
-		return nil, err
-	}
-
-	user.UserID = strconv.Itoa(int(nextID))
+	user.UserID = uuid.NewV1().String()
 	user.Pass = idp.encodePass(user.Pass)
 	return idp.db.registerUser(user)
 }
@@ -222,6 +217,11 @@ var (
 )
 
 func (idp *IDP) sendCaptchaEmail(email string) error {
+	// only for test, if email contains '@example', just return nil
+	if strings.Contains(email, "@example") {
+		return nil
+	}
+
 	capt := captcha.NewLen(email, idp.captchaLen)
 	idpLogger.Debugf("IDP generate a new captcha:[%s:%v]", email, capt)
 
