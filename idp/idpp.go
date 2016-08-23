@@ -100,10 +100,50 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	user.Pass = req.Pass
 	user.Nick = req.Nick
 	if u, err := idpp.idp.registerUser(user); err != nil {
+		idppLogger.Debugf("registerUser return error: %v", err)
 		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
 	} else {
 		rsp.User = u
+	}
+
+RET:
+	return rsp, nil
+}
+
+// Bind a device for a user
+func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) (*pb.BindDeviceRsp, error) {
+	rsp := &pb.BindDeviceRsp{
+		Error: pb.ResponseOK(),
+	}
+
+	// 1. verify user identity
+	if _, err := idpp.idp.fetchUserByID(req.UserID); err != nil {
+		idppLogger.Errorf("verify user identity error: %v", err)
+		rsp.Error = pb.NewError(pb.ErrorType_INVALID_USERID, err.Error())
+		goto RET
+	}
+
+	// 2. verify device exist
+	// if user has another device using same mac address, cann't be done.
+	if devs, err := idpp.idp.fetchUserDevicesByMac(req.UserID, req.Mac); err == nil && len(devs) > 0 {
+		idppLogger.Debugf("user[%s] already has a device using mac: %s", req.UserID, req.Mac)
+		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
+		goto RET
+	}
+
+	// 3. bind a device
+	if dev, err := idpp.idp.bindUserDevice(&pb.Device{
+		UserID:    req.UserID,
+		Os:        req.Os,
+		OsVersion: req.OsVersion,
+		For:       req.For,
+		Mac:       req.Mac,
+	}); err != nil {
+		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
+		goto RET
+	} else {
+		rsp.Device = dev
 	}
 
 RET:

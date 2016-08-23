@@ -57,10 +57,12 @@ enum DeviceFor {
 
 // user device
 message Device {
-    DeviceOS os = 1;
-    string osVersion = 2;
-    DeviceFor for = 3;
-    string mac = 4;
+    string userID = 1;
+    string deviceID = 2;
+    DeviceOS os = 3;
+    string osVersion = 4;
+    DeviceFor for = 5;
+    string mac = 6;
 }
 
 enum ErrorType {
@@ -69,6 +71,8 @@ enum ErrorType {
     INTERNAL_ERROR = 2;
     ALREADY_SIGNUP = 3;
     INVALID_CAPTCHA = 4;
+    INVALID_USERID = 5;
+    ALREADY_DEVICE = 6;
 }
 
 message Error {
@@ -84,6 +88,8 @@ service IDPP {
     rpc VerifyCaptcha(VerifyCaptchaReq) returns (VerifyCaptchaRsp) {}
     // Register a user
     rpc RegisterUser(RegisterUserReq) returns (RegisterUserRsp) {}
+    // Bind a device for a user
+    rpc BindDeviceForUser(BindDeviceReq) returns (BindDeviceRsp) {}
 }
 
 // AcquireCaptchaReq holds request
@@ -116,4 +122,17 @@ message RegisterUserReq {
 message RegisterUserRsp {
     Error error = 1;
     User user = 2;
+}
+
+message BindDeviceReq {
+    string userID = 1;
+    DeviceOS os = 2;
+    string osVersion = 3;
+    DeviceFor for = 4;
+    string mac = 5;
+}
+
+message BindDeviceRsp {
+    Error error = 1;
+    Device device = 2;
 }

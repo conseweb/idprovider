@@ -17,13 +17,14 @@ package idp
 
 import (
 	"github.com/conseweb/idprovider/config"
+	pb "github.com/conseweb/idprovider/protos"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"gopkg.in/check.v1"
 	"net"
+	"os"
 	"testing"
 	"time"
-	"os"
 )
 
 func Test(t *testing.T) {
@@ -31,7 +32,9 @@ func Test(t *testing.T) {
 }
 
 type TestIDP struct {
-	id *IDP
+	id      *IDP
+	conn    *grpc.ClientConn
+	idppCli pb.IDPPClient
 }
 
 var _ = check.Suite(&TestIDP{})
@@ -48,6 +51,19 @@ func (t *TestIDP) SetUpSuite(c *check.C) {
 	t.id.Start(srv)
 
 	go srv.Serve(lis)
+}
+
+func (t *TestIDP) SetUpTest(c *check.C) {
+	conn, err := NewClientConnectionWithAddress(viper.GetString("server.port"), false, false, nil)
+	c.Check(err, check.IsNil)
+
+	t.conn = conn
+	t.idppCli = pb.NewIDPPClient(conn)
+}
+
+func (t *TestIDP) TearDownTest(c *check.C) {
+	t.conn.Close()
+	t.idppCli = nil
 }
 
 func (t *TestIDP) TearDownSuite(c *check.C) {

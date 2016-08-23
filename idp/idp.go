@@ -18,6 +18,7 @@ package idp
 import (
 	"bytes"
 	"crypto/md5"
+	"errors"
 	"github.com/conseweb/idprovider/idp/captcha"
 	"github.com/conseweb/idprovider/idp/snowflake"
 	pb "github.com/conseweb/idprovider/protos"
@@ -29,6 +30,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/gomail.v2"
 	"html/template"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -203,11 +205,50 @@ func (idp *IDP) encodePass(pass string) string {
 	return bytes.NewBuffer(bpass).String()
 }
 
+// compare bcrypt md5(password)
+// return true if password is right, otherwise return false.
+func (idp *IDP) verifyPass(pass string, hash string) bool {
+	h := md5.New()
+	h.Write([]byte(pass))
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), h.Sum(nil)); err != nil {
+		return false
+	}
+
+	return true
+}
+
 // register a user into db
 func (idp *IDP) registerUser(user *pb.User) (*pb.User, error) {
 	user.UserID = uuid.NewV1().String()
 	user.Pass = idp.encodePass(user.Pass)
 	return idp.db.registerUser(user)
+}
+
+func (idp *IDP) fetchUserByID(userID string) (*pb.User, error) {
+	if userID == "" {
+		return nil, errors.New("invalid params")
+	}
+	return idp.db.fetchUserByID(userID)
+}
+
+func (idp *IDP) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error) {
+	if userID == "" || mac == "" {
+		return nil, errors.New("invalid params")
+	}
+
+	return idp.db.fetchUserDevicesByMac(userID, mac)
+}
+
+func (idp *IDP) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
+	nextId, err := idp.sf.NextID(int64(dev.For), int64(viper.GetInt("snowflake.areaCode")))
+	if err != nil {
+		idpLogger.Errorf("generate device id error: %v", err)
+		return nil, err
+	}
+
+	dev.DeviceID = strconv.FormatUint(nextId, 16)
+	return idp.db.bindUserDevice(dev)
 }
 
 var (

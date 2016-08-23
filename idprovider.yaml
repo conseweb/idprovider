@@ -48,7 +48,10 @@ logging:
     tcap: debug
     tcaa: debug
     tlsca: debug
-    id: debug
+
+    idp: debug
+    idpp: debug
+    db: debug
 
 # Default users to be registered with the CA on first launch.  The role is a binary OR
 # of the different roles a user can have:
@@ -189,6 +192,8 @@ pki:
 snowflake:
     # snowflake setting, farmat: 2016/08/16 16:35:00(default), local location just ok
     startTime: 2016/08/16 16:35:00
+    # area code, we splite the world into 64 areas, avaliable value can be [0, 64)
+    areaCode: 0
     # machine id, value can be [0, 32), must be set
     machineID: 0
 
