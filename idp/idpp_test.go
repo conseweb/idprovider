@@ -17,12 +17,13 @@ package idp
 
 import (
 	pb "github.com/conseweb/idprovider/protos"
-	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/check.v1"
 	"time"
+	"runtime"
+	"fmt"
 )
 
 // NewClientConnectionWithAddress Returns a new grpc.ClientConn to the given address.
@@ -45,12 +46,7 @@ func NewClientConnectionWithAddress(address string, block bool, tslEnabled bool,
 }
 
 func (t *TestIDP) TestAcquireCaptchaOK(c *check.C) {
-	conn, err := NewClientConnectionWithAddress(viper.GetString("server.port"), false, false, nil)
-	c.Check(err, check.IsNil)
-	defer conn.Close()
-
-	idppcli := pb.NewIDPPClient(conn)
-	rsp, err := idppcli.AcquireCaptcha(context.Background(), &pb.AcquireCaptchaReq{
+	rsp, err := t.idppCli.AcquireCaptcha(context.Background(), &pb.AcquireCaptchaReq{
 		SignUpType: pb.SignUpType_EMAIL,
 		SignUp:     "xxx@example.com",
 	})
@@ -60,12 +56,7 @@ func (t *TestIDP) TestAcquireCaptchaOK(c *check.C) {
 }
 
 func (t *TestIDP) TestAcquireCaptchaWrong(c *check.C) {
-	conn, err := NewClientConnectionWithAddress(viper.GetString("server.port"), false, false, nil)
-	c.Check(err, check.IsNil)
-	defer conn.Close()
-
-	idppcli := pb.NewIDPPClient(conn)
-	rsp, err := idppcli.AcquireCaptcha(context.Background(), &pb.AcquireCaptchaReq{
+	rsp, err := t.idppCli.AcquireCaptcha(context.Background(), &pb.AcquireCaptchaReq{
 		SignUpType: pb.SignUpType_EMAIL,
 		SignUp:     "xxxjsdfjddd",
 	})
@@ -75,12 +66,7 @@ func (t *TestIDP) TestAcquireCaptchaWrong(c *check.C) {
 }
 
 func (t *TestIDP) TestVerifyCaptchaWrong(c *check.C) {
-	conn, err := NewClientConnectionWithAddress(viper.GetString("server.port"), false, false, nil)
-	c.Check(err, check.IsNil)
-	defer conn.Close()
-
-	idppcli := pb.NewIDPPClient(conn)
-	rsp, err := idppcli.VerifyCaptcha(context.Background(), &pb.VerifyCaptchaReq{
+	rsp, err := t.idppCli.VerifyCaptcha(context.Background(), &pb.VerifyCaptchaReq{
 		SignUpType: pb.SignUpType_EMAIL,
 		SignUp:     "xxxjsdfjddd",
 		Captcha:    "sdfjidf",
@@ -91,14 +77,8 @@ func (t *TestIDP) TestVerifyCaptchaWrong(c *check.C) {
 }
 
 func (t *TestIDP) TestRegisterUser(c *check.C) {
-	conn, err := NewClientConnectionWithAddress(viper.GetString("server.port"), false, false, nil)
-	c.Check(err, check.IsNil)
-	defer conn.Close()
-
-	idppcli := pb.NewIDPPClient(conn)
-
 	// test1
-	rsp1, err1 := idppcli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
 		SignUp: "13800000000",
 		Nick: "13800000000",
@@ -110,7 +90,7 @@ func (t *TestIDP) TestRegisterUser(c *check.C) {
 	c.Check(rsp1.User.Nick, check.Equals, "13800000000")
 
 	// test2
-	rsp2, err2 := idppcli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+	rsp2, err2 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
 		SignUp: "13800000000",
 		Nick: "13800000000",
@@ -120,4 +100,42 @@ func (t *TestIDP) TestRegisterUser(c *check.C) {
 	c.Check(rsp2, check.NotNil)
 	c.Check(rsp2.Error.OK(), check.Equals, false)
 	c.Check(rsp2.Error.Error(), check.Equals, "Error[ALREADY_SIGNUP]: 13800000000 is already a user")
+}
+
+func (t *TestIDP) TestBindUserDevice(c *check.C) {
+	// test register user
+	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+		SignUpType: pb.SignUpType_MOBILE,
+		SignUp: "13800000001",
+		Nick: "13800000001",
+		Pass: "13800000001",
+	})
+	c.Check(err1, check.IsNil)
+	c.Check(rsp1, check.NotNil)
+	c.Check(rsp1.Error.OK(), check.Equals, true)
+	c.Check(rsp1.User.Nick, check.Equals, "13800000001")
+
+	// test bind user device ok
+	rsp2, err2 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
+		UserID: rsp1.User.UserID,
+		Os: pb.DeviceOS_MAC,
+		OsVersion: fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
+		For: pb.DeviceFor_FARMER,
+		Mac: getHardwareAddr(),
+	})
+	c.Check(err2, check.IsNil)
+	c.Check(rsp2, check.NotNil)
+	c.Check(rsp2.Error.OK(), check.Equals, true)
+
+	rsp3, err3 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
+		UserID: rsp1.User.UserID,
+		Os: pb.DeviceOS_MAC,
+		OsVersion: fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
+		For: pb.DeviceFor_FARMER,
+		Mac: getHardwareAddr(),
+	})
+
+	c.Check(err3, check.IsNil)
+	c.Check(rsp3, check.NotNil)
+	c.Check(rsp3.Error.OK(), check.Equals, false)
 }
