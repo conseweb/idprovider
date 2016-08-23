@@ -51,6 +51,7 @@ logging:
 
     idp: debug
     idpp: debug
+    idpa: debug
     db: debug
 
 # Default users to be registered with the CA on first launch.  The role is a binary OR

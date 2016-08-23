@@ -35,6 +35,7 @@ type TestIDP struct {
 	id      *IDP
 	conn    *grpc.ClientConn
 	idppCli pb.IDPPClient
+	idpaCli pb.IDPAClient
 }
 
 var _ = check.Suite(&TestIDP{})
@@ -59,11 +60,13 @@ func (t *TestIDP) SetUpTest(c *check.C) {
 
 	t.conn = conn
 	t.idppCli = pb.NewIDPPClient(conn)
+	t.idpaCli = pb.NewIDPAClient(conn)
 }
 
 func (t *TestIDP) TearDownTest(c *check.C) {
 	t.conn.Close()
 	t.idppCli = nil
+	t.idpaCli = nil
 }
 
 func (t *TestIDP) TearDownSuite(c *check.C) {

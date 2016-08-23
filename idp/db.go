@@ -38,6 +38,7 @@ type dbAdapter interface {
 	fetchUserByID(userID string) (*pb.User, error)
 	fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error)
 	bindUserDevice(dev *pb.Device) (*pb.Device, error)
+	fetchDeviceByID(deviceID string) (*pb.Device, error)
 	close() error
 }
 
@@ -186,6 +187,20 @@ func (s *sqliteImpl) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 
 	dbLogger.Debugf("user[%s] bind device: %+v", dev.UserID, dev)
 	return dev, nil
+}
+
+func (s *sqliteImpl) fetchDeviceByID(deviceID string) (*pb.Device, error) {
+	if deviceID == "" {
+		return nil, errors.New("invalid params")
+	}
+	device := &pb.Device{}
+
+	if err := s.db.QueryRow("SELECT id, userID, osType, osVersion, deviceFor, mac FROM devices WHERE id = ?", deviceID).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.OsVersion, &device.For, &device.Mac); err != nil {
+		dbLogger.Warningf("using deviceID: %s fetching device return error: %v", deviceID, err)
+		return nil, err
+	}
+
+	return device, nil
 }
 
 func (s *sqliteImpl) close() error {

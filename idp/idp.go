@@ -56,7 +56,7 @@ type IDP struct {
 // NewIDP returns a IDProvider,
 // If some error occur, the application just exit with status 1
 func NewIDP() *IDP {
-	flogging.LoggingInit("id")
+	flogging.LoggingInit("idp")
 	idp := new(IDP)
 
 	// init snowflake
@@ -125,6 +125,7 @@ func (idp *IDP) Start(srv *grpc.Server) {
 
 	go idp.asyncSendEmail()
 	idp.startIDPP(srv)
+	idp.startIDPA(srv)
 	idp.gRPCServer = srv
 
 	idpLogger.Info("IDProvider started.")
@@ -132,7 +133,14 @@ func (idp *IDP) Start(srv *grpc.Server) {
 
 func (idp *IDP) startIDPP(srv *grpc.Server) {
 	pb.RegisterIDPPServer(srv, &IDPP{idp})
-	idpLogger.Info("IDPP PUBLIC gRPC API server started")
+	flogging.LoggingInit("idpp")
+	idpLogger.Info("IDP PUBLIC gRPC API server started")
+}
+
+func (idp *IDP) startIDPA(srv *grpc.Server) {
+	pb.RegisterIDPAServer(srv, &IDPA{idp})
+	flogging.LoggingInit("idpa")
+	idpLogger.Info("IDP ADMIN gRPC API server started")
 }
 
 func (idp *IDP) Stop() error {
@@ -180,6 +188,7 @@ func (idp *IDP) sendCaptcha(signUpType pb.SignUpType, signUp string) error {
 	return err
 }
 
+// verify captcha
 func (idp *IDP) verifyCaptcha(signup, capt string) bool {
 	idpLogger.Debugf("IDP verify captcha: [%s, %s]", signup, capt)
 	return captcha.VerifyString(signup, capt)
@@ -225,6 +234,7 @@ func (idp *IDP) registerUser(user *pb.User) (*pb.User, error) {
 	return idp.db.registerUser(user)
 }
 
+// fetch user though id
 func (idp *IDP) fetchUserByID(userID string) (*pb.User, error) {
 	if userID == "" {
 		return nil, errors.New("invalid params")
@@ -232,6 +242,8 @@ func (idp *IDP) fetchUserByID(userID string) (*pb.User, error) {
 	return idp.db.fetchUserByID(userID)
 }
 
+// fetch user devices using mac address,
+// we support one user can only have different mac address device
 func (idp *IDP) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error) {
 	if userID == "" || mac == "" {
 		return nil, errors.New("invalid params")
@@ -240,6 +252,7 @@ func (idp *IDP) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error) 
 	return idp.db.fetchUserDevicesByMac(userID, mac)
 }
 
+// bind a device 2 a user
 func (idp *IDP) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 	nextId, err := idp.sf.NextID(int64(dev.For), int64(viper.GetInt("snowflake.areaCode")))
 	if err != nil {
@@ -249,6 +262,11 @@ func (idp *IDP) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 
 	dev.DeviceID = strconv.FormatUint(nextId, 16)
 	return idp.db.bindUserDevice(dev)
+}
+
+// fetch device using device id
+func (idp *IDP) fetchDeviceByID(deviceID string) (*pb.Device, error) {
+	return idp.db.fetchDeviceByID(deviceID)
 }
 
 var (
