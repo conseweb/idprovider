@@ -125,11 +125,14 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	}
 
 	// 2. verify device exist
-	// if user has another device using same mac address, cann't be done.
-	if devs, err := idpp.idp.fetchUserDevicesByMac(req.UserID, req.Mac); err == nil && len(devs) > 0 {
-		idppLogger.Debugf("user[%s] already has a device using mac: %s", req.UserID, req.Mac)
-		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
-		goto RET
+	// if user has another device using same mac address, can't be done.
+	// TODO only farmer require this check?
+	if req.For == pb.DeviceFor_FARMER {
+		if devs, err := idpp.idp.fetchUserDevicesByMac(req.UserID, req.Mac); err == nil && len(devs) > 0 {
+			idppLogger.Debugf("user[%s] already has a device using mac: %s", req.UserID, req.Mac)
+			rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
+			goto RET
+		}
 	}
 
 	// 3. bind a device

@@ -73,6 +73,7 @@ enum ErrorType {
     INVALID_CAPTCHA = 4;
     INVALID_USERID = 5;
     ALREADY_DEVICE = 6;
+    INVALID_DEVICE = 7;
 }
 
 message Error {
@@ -90,6 +91,12 @@ service IDPP {
     rpc RegisterUser(RegisterUserReq) returns (RegisterUserRsp) {}
     // Bind a device for a user
     rpc BindDeviceForUser(BindDeviceReq) returns (BindDeviceRsp) {}
+}
+
+// idprovider admin service
+service IDPA {
+    // Verify device
+    rpc VerifyDevice(VerifyDeviceReq) returns (VerifyDeviceRsp) {}
 }
 
 // AcquireCaptchaReq holds request
@@ -135,4 +142,13 @@ message BindDeviceReq {
 message BindDeviceRsp {
     Error error = 1;
     Device device = 2;
+}
+
+message VerifyDeviceReq {
+    string deviceID = 1;
+    DeviceFor for = 2;
+}
+
+message VerifyDeviceRsp {
+    Error error = 1;
 }
