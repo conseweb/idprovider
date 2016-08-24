@@ -16,6 +16,7 @@ limitations under the License.
 package idp
 
 import (
+	cpb "github.com/conseweb/common/protos"
 	pb "github.com/conseweb/idprovider/protos"
 	"github.com/op/go-logging"
 	"golang.org/x/net/context"
@@ -30,21 +31,31 @@ var idpaLogger = logging.MustGetLogger("idpa")
 // Verify device
 func (idpa *IDPA) VerifyDevice(ctx context.Context, req *pb.VerifyDeviceReq) (*pb.VerifyDeviceRsp, error) {
 	rsp := &pb.VerifyDeviceRsp{
-		Error: pb.ResponseOK(),
+		Error: cpb.ResponseOK(),
 	}
+	idpaLogger.Debugf("IDPA.VerifyDevice, req: %+v", req)
+	defer idpaLogger.Debugf("IDPA.VerifyDevice, rsp: %+v", rsp)
 
 	var device *pb.Device
 	var err error
 	// 1. fetch device using device id
 	if device, err = idpa.idp.fetchDeviceByID(req.DeviceID); err != nil {
-		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
+		rsp.Error = cpb.NewError(cpb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
 	}
 
 	// 2. device for verify
 	if device.For != req.For {
-		rsp.Error = pb.NewError(pb.ErrorType_INVALID_DEVICE, "device for not match")
+		rsp.Error = cpb.NewError(cpb.ErrorType_INVALID_DEVICE, "device for not match")
 		goto RET
+	}
+
+	switch device.For {
+	case pb.DeviceFor_SUPERVISOR:
+		if device.Alias != req.DeviceAlias || device.UserID != req.UserID {
+			rsp.Error = cpb.NewError(cpb.ErrorType_INVALID_DEVICE, "device for not match")
+			goto RET
+		}
 	}
 
 RET:

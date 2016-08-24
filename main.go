@@ -20,7 +20,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/conseweb/idprovider/config"
+	"github.com/conseweb/common/config"
 	"github.com/conseweb/idprovider/idp"
 	"github.com/hyperledger/fabric/core/crypto"
 	"github.com/hyperledger/fabric/flogging"
@@ -43,7 +43,10 @@ var (
 )
 
 func main() {
-	config.LoadConfig()
+	if err := config.LoadConfig("IDPROVIDER", "idprovider", "github.com/conseweb/idprovider"); err != nil {
+		logger.Fatal(err)
+	}
+
 	flogging.LoggingInit("server")
 
 	// Init the crypto layer
@@ -64,7 +67,7 @@ func main() {
 	runtime.GOMAXPROCS(viper.GetInt("server.gomaxprocs"))
 
 	var opts []grpc.ServerOption
-	if viper.GetString("server.tls.cert.file") != "" {
+	if viper.GetBool("server.tls.enabled") {
 		creds, err := credentials.NewServerTLSFromFile(viper.GetString("server.tls.cert.file"), viper.GetString("server.tls.key.file"))
 		if err != nil {
 			logger.Panic(err)

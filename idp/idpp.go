@@ -16,6 +16,7 @@ limitations under the License.
 package idp
 
 import (
+	cpb "github.com/conseweb/common/protos"
 	pb "github.com/conseweb/idprovider/protos"
 	"github.com/op/go-logging"
 	"golang.org/x/net/context"
@@ -32,25 +33,25 @@ type IDPP struct {
 // Acquire email/tel captcha
 func (idpp *IDPP) AcquireCaptcha(ctx context.Context, req *pb.AcquireCaptchaReq) (*pb.AcquireCaptchaRsp, error) {
 	rsp := &pb.AcquireCaptchaRsp{
-		Error: pb.ResponseOK(),
+		Error: cpb.ResponseOK(),
 	}
 
 	// 1. verify signup
 	if !req.Validate() {
-		rsp.Error = pb.NewError(pb.ErrorType_INVALID_PARAM, "AcquireCaptchaReq is invalid.")
+		rsp.Error = cpb.NewError(cpb.ErrorType_INVALID_PARAM, "AcquireCaptchaReq is invalid.")
 		idppLogger.Debugf("AcquireCaptcha's request is invalid: %v", req)
 		goto RET
 	}
 
 	// 2. verify already user
 	if idpp.idp.isUserExist(req.SignUp) {
-		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_SIGNUP, "%s is already a user", req.SignUp)
+		rsp.Error = cpb.NewErrorf(cpb.ErrorType_ALREADY_SIGNUP, "%s is already a user", req.SignUp)
 		goto RET
 	}
 
 	// 3. send captcha
 	if err := idpp.idp.sendCaptcha(req.SignUpType, req.SignUp); err != nil {
-		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
+		rsp.Error = cpb.NewError(cpb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
 	}
 
@@ -61,12 +62,12 @@ RET:
 // Verify email/tel captcha
 func (idpp *IDPP) VerifyCaptcha(ctx context.Context, req *pb.VerifyCaptchaReq) (*pb.VerifyCaptchaRsp, error) {
 	rsp := &pb.VerifyCaptchaRsp{
-		Error: pb.ResponseOK(),
+		Error: cpb.ResponseOK(),
 	}
 
 	// 1. verify captcha
 	if !idpp.idp.verifyCaptcha(req.SignUp, req.Captcha) {
-		rsp.Error = pb.NewError(pb.ErrorType_INVALID_CAPTCHA, "captcha is wrong, may be expired")
+		rsp.Error = cpb.NewError(cpb.ErrorType_INVALID_CAPTCHA, "captcha is wrong, may be expired")
 		goto RET
 	}
 
@@ -77,7 +78,7 @@ RET:
 // Register a user
 func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*pb.RegisterUserRsp, error) {
 	rsp := &pb.RegisterUserRsp{
-		Error: pb.ResponseOK(),
+		Error: cpb.ResponseOK(),
 	}
 
 	// declaration field
@@ -85,7 +86,7 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 
 	// 1. verify already user
 	if idpp.idp.isUserExist(req.SignUp) {
-		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_SIGNUP, "%s is already a user", req.SignUp)
+		rsp.Error = cpb.NewErrorf(cpb.ErrorType_ALREADY_SIGNUP, "%s is already a user", req.SignUp)
 		goto RET
 	}
 
@@ -101,7 +102,7 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	user.Nick = req.Nick
 	if u, err := idpp.idp.registerUser(user); err != nil {
 		idppLogger.Debugf("registerUser return error: %v", err)
-		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
+		rsp.Error = cpb.NewError(cpb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
 	} else {
 		rsp.User = u
@@ -114,13 +115,13 @@ RET:
 // Bind a device for a user
 func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) (*pb.BindDeviceRsp, error) {
 	rsp := &pb.BindDeviceRsp{
-		Error: pb.ResponseOK(),
+		Error: cpb.ResponseOK(),
 	}
 
 	// 1. verify user identity
 	if _, err := idpp.idp.fetchUserByID(req.UserID); err != nil {
 		idppLogger.Errorf("verify user identity error: %v", err)
-		rsp.Error = pb.NewError(pb.ErrorType_INVALID_USERID, err.Error())
+		rsp.Error = cpb.NewError(cpb.ErrorType_INVALID_USERID, err.Error())
 		goto RET
 	}
 
@@ -130,7 +131,7 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	if req.For == pb.DeviceFor_FARMER {
 		if devs, err := idpp.idp.fetchUserDevicesByMac(req.UserID, req.Mac); err == nil && len(devs) > 0 {
 			idppLogger.Debugf("user[%s] already has a device using mac: %s", req.UserID, req.Mac)
-			rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE_MAC, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
+			rsp.Error = cpb.NewErrorf(cpb.ErrorType_ALREADY_DEVICE_MAC, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
 			goto RET
 		}
 	}
@@ -142,19 +143,19 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	}
 	if dev, err := idpp.idp.fetchUserDeviceByAlias(req.UserID, req.Alias); err == nil && dev != nil && dev.DeviceID != "" {
 		idppLogger.Debugf("user[%s] already has a device using alias: %s", req.UserID, req.Alias)
-		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE_ALIAS, "user[%s] already has a device using alias: %s", req.UserID, req.Alias)
+		rsp.Error = cpb.NewErrorf(cpb.ErrorType_ALREADY_DEVICE_ALIAS, "user[%s] already has a device using alias: %s", req.UserID, req.Alias)
 		goto RET
 	}
 
 	// 4. bind a device
 	if dev, err := idpp.idp.bindUserDevice(&pb.Device{
-		UserID:    req.UserID,
-		Os:        req.Os,
-		For:       req.For,
-		Mac:       req.Mac,
-		Alias:     req.Alias,
+		UserID: req.UserID,
+		Os:     req.Os,
+		For:    req.For,
+		Mac:    req.Mac,
+		Alias:  req.Alias,
 	}); err != nil {
-		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
+		rsp.Error = cpb.NewError(cpb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
 	} else {
 		rsp.Device = dev

@@ -16,7 +16,7 @@ limitations under the License.
 package idp
 
 import (
-	"github.com/conseweb/idprovider/config"
+	"github.com/conseweb/common/config"
 	pb "github.com/conseweb/idprovider/protos"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -41,7 +41,7 @@ type TestIDP struct {
 var _ = check.Suite(&TestIDP{})
 
 func (t *TestIDP) SetUpSuite(c *check.C) {
-	config.LoadConfig()
+	config.LoadConfig("IDPROVIDER", "idprovider", "github.com/conseweb/idprovider")
 
 	t.id = NewIDP()
 

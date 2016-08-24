@@ -18,6 +18,8 @@ syntax = "proto3";
 
 package protos;
 
+import "github.com/conseweb/common/protos/error.proto";
+
 // which way to unique a user
 enum SignUpType {
     EMAIL = 0;
@@ -59,23 +61,6 @@ message Device {
     DeviceFor for = 4;
     string mac = 5;
     string alias = 6;
-}
-
-enum ErrorType {
-    NONE_ERROR = 0;
-    INVALID_PARAM = 1;
-    INTERNAL_ERROR = 2;
-    ALREADY_SIGNUP = 3;
-    INVALID_CAPTCHA = 4;
-    INVALID_USERID = 5;
-    INVALID_DEVICE = 6;
-    ALREADY_DEVICE_MAC = 7;
-    ALREADY_DEVICE_ALIAS = 8;
-}
-
-message Error {
-    ErrorType errorType = 1;
-    string message = 2;
 }
 
 // idprovider public service
@@ -144,6 +129,8 @@ message BindDeviceRsp {
 message VerifyDeviceReq {
     string deviceID = 1;
     DeviceFor for = 2;
+    string userID = 3;
+    string deviceAlias = 4;
 }
 
 message VerifyDeviceRsp {
