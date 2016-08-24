@@ -24,6 +24,12 @@ enum SignUpType {
     MOBILE = 1;
 }
 
+// user type
+enum UserType {
+    NORMAL = 0;
+    ORGANIZATION = 1;
+}
+
 // User class
 // not for orm, just for easy code
 message User {
@@ -32,18 +38,8 @@ message User {
     string mobile = 3;
     string pass = 4; // the pass using algo brypt(md5(user pass)), user pass can also be user real pass's md5
     string nick = 5;
-    repeated Device devices = 6; // every user can hold lots of device, but now may be just one.
-}
-
-// device OS
-enum DeviceOS {
-    UNKONWN = 0;
-    MAC = 1;
-    LINUX = 2;
-    UNIX = 3;
-    WINDOWS = 4;
-    IOS = 5;
-    ANDROID = 6;
+    UserType userType = 6;
+    repeated Device devices = 7; // every user can hold lots of device, but now may be just one.
 }
 
 // device for
@@ -59,10 +55,10 @@ enum DeviceFor {
 message Device {
     string userID = 1;
     string deviceID = 2;
-    DeviceOS os = 3;
-    string osVersion = 4;
-    DeviceFor for = 5;
-    string mac = 6;
+    string os = 3;
+    DeviceFor for = 4;
+    string mac = 5;
+    string alias = 6;
 }
 
 enum ErrorType {
@@ -72,8 +68,9 @@ enum ErrorType {
     ALREADY_SIGNUP = 3;
     INVALID_CAPTCHA = 4;
     INVALID_USERID = 5;
-    ALREADY_DEVICE = 6;
-    INVALID_DEVICE = 7;
+    INVALID_DEVICE = 6;
+    ALREADY_DEVICE_MAC = 7;
+    ALREADY_DEVICE_ALIAS = 8;
 }
 
 message Error {
@@ -133,10 +130,10 @@ message RegisterUserRsp {
 
 message BindDeviceReq {
     string userID = 1;
-    DeviceOS os = 2;
-    string osVersion = 3;
-    DeviceFor for = 4;
-    string mac = 5;
+    string os = 2;
+    DeviceFor for = 3;
+    string mac = 4;
+    string alias = 5;
 }
 
 message BindDeviceRsp {

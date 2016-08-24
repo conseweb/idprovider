@@ -189,7 +189,11 @@ pki:
                          organization: Hyperledger
                          country: US
 
-
+########################################################################################################################
+#
+# snowflake section, used for generate device id
+#
+########################################################################################################################
 snowflake:
     # snowflake setting, farmat: 2016/08/16 16:35:00(default), local location just ok
     startTime: 2016/08/16 16:35:00
@@ -197,7 +201,11 @@ snowflake:
     areaCode: 0
     # machine id, value can be [0, 32), must be set
     machineID: 0
-
+########################################################################################################################
+#
+# captcha section, used for verfiy email or mobile
+#
+########################################################################################################################
 captcha:
     # how long the captcha holds the digits
     length: 6
@@ -205,25 +213,50 @@ captcha:
     expiration: 10m
     # how many id/value pair can hold into captcha store
     collectNum: 1000
-
+########################################################################################################################
+#
+# mail section
+#
+########################################################################################################################
 mail:
     # smtp mail host
     host: smtp.mxhichina.com
+    # smtp mail port
     port: 25
+    # smtp sender username
     user: zhaoming@qkldx.net
+    # smtp sender password
     pass: QAZwsx123
     # how many messages can hold in the channel which waitting for send.
     messagePool: 100
+    # when sending captcha email, the subject of email
     captchaEmailSubject: please verify your email
-
+########################################################################################################################
+#
+# db section
+#
+########################################################################################################################
 db:
     # which db backend used to store records, default is sqlite3
     driver: sqlite3
     # sqlite3 db backend used to store records, if driver is sqlite3, this section is required.
     sqlite3:
-      # where to store db file
-      dbpath: /tmp/idprovider
+        # where to store db file
+        dbpath: /tmp/idprovider
     # the maximum number of connections in the idle connection pool. If <= 0, no idle connections are retained.
     maxIdle: 10
     # the maximum number of open connections to the database. If <= 0, then there is no limit on the number of open connections.
     maxOpen: 100
+    # pre register users
+    # pre register user list format:
+    # nick: email pass type
+    users:
+        mojingInc: mojing@blockchain-university.org;12345678;1
+        魔镜科技:   mojing@qkldx.net;12345678;1
+        testUser:  test@example.com;1234567890;0
+    # pre defined devices
+    # list format:
+    # device alias: "user nick" osType "osVersion" deviceFor "mac address"
+    devices:
+        supervisor_1: mojing@blockchain-university.org;drawn amd64;3;60:03:08:8a:18:fa
+        supervisor_2: mojing@qkldx.net;drawn amd64;3;60:03:08:8a:18:fa

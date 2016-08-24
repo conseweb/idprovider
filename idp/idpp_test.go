@@ -16,14 +16,14 @@ limitations under the License.
 package idp
 
 import (
+	"fmt"
 	pb "github.com/conseweb/idprovider/protos"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/check.v1"
-	"time"
 	"runtime"
-	"fmt"
+	"time"
 )
 
 // NewClientConnectionWithAddress Returns a new grpc.ClientConn to the given address.
@@ -80,9 +80,9 @@ func (t *TestIDP) TestRegisterUser(c *check.C) {
 	// test1
 	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
-		SignUp: "13800000000",
-		Nick: "13800000000",
-		Pass: "13800000000",
+		SignUp:     "13800000000",
+		Nick:       "13800000000",
+		Pass:       "13800000000",
 	})
 	c.Check(err1, check.IsNil)
 	c.Check(rsp1, check.NotNil)
@@ -92,9 +92,9 @@ func (t *TestIDP) TestRegisterUser(c *check.C) {
 	// test2
 	rsp2, err2 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
-		SignUp: "13800000000",
-		Nick: "13800000000",
-		Pass: "13800000000",
+		SignUp:     "13800000000",
+		Nick:       "13800000000",
+		Pass:       "13800000000",
 	})
 	c.Check(err2, check.IsNil)
 	c.Check(rsp2, check.NotNil)
@@ -106,9 +106,9 @@ func (t *TestIDP) TestBindUserDevice(c *check.C) {
 	// test register user
 	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
-		SignUp: "13800000001",
-		Nick: "13800000001",
-		Pass: "13800000001",
+		SignUp:     "13800000001",
+		Nick:       "13800000001",
+		Pass:       "13800000001",
 	})
 	c.Check(err1, check.IsNil)
 	c.Check(rsp1, check.NotNil)
@@ -118,10 +118,9 @@ func (t *TestIDP) TestBindUserDevice(c *check.C) {
 	// test bind user device ok
 	rsp2, err2 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
 		UserID: rsp1.User.UserID,
-		Os: pb.DeviceOS_MAC,
-		OsVersion: fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
-		For: pb.DeviceFor_FARMER,
-		Mac: getHardwareAddr(),
+		Os:     fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
+		For:    pb.DeviceFor_FARMER,
+		Mac:    getHardwareAddr(),
 	})
 	c.Check(err2, check.IsNil)
 	c.Check(rsp2, check.NotNil)
@@ -129,10 +128,9 @@ func (t *TestIDP) TestBindUserDevice(c *check.C) {
 
 	rsp3, err3 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
 		UserID: rsp1.User.UserID,
-		Os: pb.DeviceOS_MAC,
-		OsVersion: fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
-		For: pb.DeviceFor_FARMER,
-		Mac: getHardwareAddr(),
+		Os:     fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
+		For:    pb.DeviceFor_FARMER,
+		Mac:    getHardwareAddr(),
 	})
 
 	c.Check(err3, check.IsNil)

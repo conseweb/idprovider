@@ -36,7 +36,9 @@ type dbAdapter interface {
 	isUserExist(username string) bool
 	registerUser(user *pb.User) (*pb.User, error)
 	fetchUserByID(userID string) (*pb.User, error)
+	fetchUserByEmail(email string) (*pb.User, error)
 	fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error)
+	fetchUserDeviceByAlias(userID, alias string) (*pb.Device, error)
 	bindUserDevice(dev *pb.Device) (*pb.Device, error)
 	fetchDeviceByID(deviceID string) (*pb.Device, error)
 	close() error
@@ -87,7 +89,8 @@ func (s *sqliteImpl) initDB() error {
 			email VARCHAR(32),
 			mobile VARCHAR(20),
 			nick VARCHAR(20),
-			pass VARCHAR(255)
+			pass VARCHAR(255),
+			type INTEGER
 		)
 	`); err != nil {
 		return err
@@ -100,10 +103,10 @@ func (s *sqliteImpl) initDB() error {
 			row INTEGER PRIMARY KEY,
 			id VARCHAR(32),
 			userID VARCHAR(32),
-			osType INTEGER,
-			osVersion VARCHAR(32),
-			deviceFor INTEGER,
-			mac VARCHAR(64)
+			os VARCHAR(32),
+			for INTEGER,
+			mac VARCHAR(64),
+			alias VARCHAR(64)
 		)
 	`); err != nil {
 		return err
@@ -118,7 +121,7 @@ func (s *sqliteImpl) isUserExist(username string) bool {
 	}
 
 	var row int
-	if s.db.QueryRow("SELECT row FROM users WHERE email = ? or mobile = ?", username, username).Scan(&row); row > 0 {
+	if s.db.QueryRow("SELECT row FROM users WHERE email = ? OR mobile = ?", username, username).Scan(&row); row > 0 {
 		return true
 	}
 
@@ -126,7 +129,7 @@ func (s *sqliteImpl) isUserExist(username string) bool {
 }
 
 func (s *sqliteImpl) registerUser(user *pb.User) (*pb.User, error) {
-	if _, err := s.db.Exec("INSERT INTO users(id, email, mobile, nick, pass) VALUES(?, ?, ?, ?, ?)", user.UserID, user.Email, user.Mobile, user.Nick, user.Pass); err != nil {
+	if _, err := s.db.Exec("INSERT INTO users(id, email, mobile, nick, pass, type) VALUES(?, ?, ?, ?, ?, ?)", user.UserID, user.Email, user.Mobile, user.Nick, user.Pass, user.UserType); err != nil {
 		dbLogger.Errorf("insert into user db error: %v", err)
 		return nil, err
 	}
@@ -141,11 +144,25 @@ func (s *sqliteImpl) fetchUserByID(userID string) (*pb.User, error) {
 	}
 
 	u := &pb.User{}
-	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass FROM users WHERE id = ?", userID).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass); err != nil {
+	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type FROM users WHERE id = ?", userID).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType); err != nil {
 		return nil, err
 	}
 
 	dbLogger.Debugf("user fetched by id: %+v", u)
+	return u, nil
+}
+
+func (s *sqliteImpl) fetchUserByEmail(email string) (*pb.User, error) {
+	if email == "" {
+		return nil, errors.New("invalid params")
+	}
+
+	u := &pb.User{}
+	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type FROM users WHERE email = ?", email).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType); err != nil {
+		return nil, err
+	}
+
+	dbLogger.Debugf("user fetched by email: %+v", u)
 	return u, nil
 }
 
@@ -154,7 +171,7 @@ func (s *sqliteImpl) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, er
 		return nil, errors.New("invalid params")
 	}
 
-	rows, err := s.db.Query("SELECT id, userID, osType, osVersion, deviceFor, mac From devices WHERE userID = ? and mac = ?", userID, mac)
+	rows, err := s.db.Query("SELECT id, userID, os, for, mac, alias From devices WHERE userID = ? AND mac = ?", userID, mac)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +180,7 @@ func (s *sqliteImpl) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, er
 	devices := make([]*pb.Device, 0)
 	for rows.Next() {
 		device := &pb.Device{}
-		err := rows.Scan(&device.DeviceID, &device.UserID, &device.Os, &device.OsVersion, &device.For, &device.Mac)
+		err := rows.Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias)
 		if err != nil {
 			continue
 		}
@@ -175,12 +192,27 @@ func (s *sqliteImpl) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, er
 	return devices, nil
 }
 
+func (s *sqliteImpl) fetchUserDeviceByAlias(userID, alias string) (*pb.Device, error) {
+	if userID == "" || alias == "" {
+		return nil, errors.New("invalid params")
+	}
+
+	device := &pb.Device{}
+	if err := s.db.QueryRow("SELECT id, userID, os, for, mac, alias FROM devices WHERE userID=? AND alias = ?", userID, alias).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias); err != nil {
+		dbLogger.Debugf("fetching user device by alias return error: %v", err)
+		return nil, err
+	}
+
+	dbLogger.Debugf("fetching user device by alias: %+v", device)
+	return device, nil
+}
+
 func (s *sqliteImpl) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 	if dev == nil || dev.UserID == "" || dev.DeviceID == "" || dev.Mac == "" {
 		return nil, errors.New("invalid params")
 	}
 
-	if _, err := s.db.Exec("INSERT INTO devices (id, userID, osType, osVersion, deviceFor, mac) VALUES (?, ?, ?, ?, ?, ?)", dev.DeviceID, dev.UserID, dev.Os, dev.OsVersion, dev.For, dev.Mac); err != nil {
+	if _, err := s.db.Exec("INSERT INTO devices (id, userID, os, for, mac, alias) VALUES (?, ?, ?, ?, ?, ?)", dev.DeviceID, dev.UserID, dev.Os, dev.For, dev.Mac, dev.Alias); err != nil {
 		dbLogger.Errorf("bind user device ret error: %v", err)
 		return nil, err
 	}
@@ -195,7 +227,7 @@ func (s *sqliteImpl) fetchDeviceByID(deviceID string) (*pb.Device, error) {
 	}
 	device := &pb.Device{}
 
-	if err := s.db.QueryRow("SELECT id, userID, osType, osVersion, deviceFor, mac FROM devices WHERE id = ?", deviceID).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.OsVersion, &device.For, &device.Mac); err != nil {
+	if err := s.db.QueryRow("SELECT id, userID, os, for, mac, alias FROM devices WHERE id = ?", deviceID).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias); err != nil {
 		dbLogger.Warningf("using deviceID: %s fetching device return error: %v", deviceID, err)
 		return nil, err
 	}

@@ -17,6 +17,8 @@ package idp
 
 import (
 	"net"
+	"crypto/md5"
+	"bytes"
 )
 
 func getHardwareAddr() string {
@@ -33,4 +35,11 @@ func getHardwareAddr() string {
 	}
 
 	return ""
+}
+
+func encodeMD5(s string) string {
+	h := md5.New()
+	h.Write([]byte(s))
+
+	return bytes.NewBuffer(h.Sum(nil)).String()
 }
