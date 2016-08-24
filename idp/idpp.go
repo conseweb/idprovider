@@ -130,18 +130,29 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	if req.For == pb.DeviceFor_FARMER {
 		if devs, err := idpp.idp.fetchUserDevicesByMac(req.UserID, req.Mac); err == nil && len(devs) > 0 {
 			idppLogger.Debugf("user[%s] already has a device using mac: %s", req.UserID, req.Mac)
-			rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
+			rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE_MAC, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
 			goto RET
 		}
 	}
 
-	// 3. bind a device
+	// 3. verify device using userid & alias
+	// if user has another device using same alias, can't be done.
+	if req.Alias == "" {
+		req.Alias = "default"
+	}
+	if dev, err := idpp.idp.fetchUserDeviceByAlias(req.UserID, req.Alias); err == nil && dev != nil && dev.DeviceID != "" {
+		idppLogger.Debugf("user[%s] already has a device using alias: %s", req.UserID, req.Alias)
+		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE_ALIAS, "user[%s] already has a device using alias: %s", req.UserID, req.Alias)
+		goto RET
+	}
+
+	// 4. bind a device
 	if dev, err := idpp.idp.bindUserDevice(&pb.Device{
 		UserID:    req.UserID,
 		Os:        req.Os,
-		OsVersion: req.OsVersion,
 		For:       req.For,
 		Mac:       req.Mac,
+		Alias:     req.Alias,
 	}); err != nil {
 		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET

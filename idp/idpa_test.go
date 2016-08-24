@@ -39,8 +39,7 @@ func (t *TestIDP) TestVerifyDevice(c *check.C) {
 	// test bind user device ok
 	rsp2, err2 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
 		UserID:    rsp1.User.UserID,
-		Os:        pb.DeviceOS_MAC,
-		OsVersion: fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
+		Os:        fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
 		For:       pb.DeviceFor_FARMER,
 		Mac:       getHardwareAddr(),
 	})

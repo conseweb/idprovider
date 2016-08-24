@@ -17,7 +17,6 @@ package idp
 
 import (
 	"bytes"
-	"crypto/md5"
 	"errors"
 	"github.com/conseweb/idprovider/idp/captcha"
 	"github.com/conseweb/idprovider/idp/snowflake"
@@ -116,7 +115,78 @@ func NewIDP() *IDP {
 	expiration := viper.GetDuration("captcha.expiration")
 	captcha.SetCustomStore(captcha.NewMemoryStore(collectNum, expiration))
 
+	// populate users
+	idp.populateUsersTable()
+	// populate devices
+	idp.populateUserDevicesTable()
+
 	return idp
+}
+
+// populate users
+func (idp *IDP) populateUsersTable() {
+	for nick, user := range viper.GetStringMapString("db.users") {
+		vals := strings.Split(user, ";")
+		email := vals[0]
+		pass := encodeMD5(vals[1])
+		userType, err := strconv.Atoi(vals[2])
+		if err != nil {
+			idpLogger.Errorf("convert userType string 2 int return error: %v", err)
+			continue
+		}
+
+		if idp.isUserExist(email) {
+			continue
+		}
+
+		if _, err := idp.registerUser(&pb.User{
+			Email:    email,
+			Pass:     pass,
+			Nick:     nick,
+			UserType: pb.UserType(userType),
+		}); err != nil {
+			idpLogger.Errorf("pre register user return error: %v", err)
+			continue
+		}
+	}
+}
+
+// populate devices
+func (idp *IDP) populateUserDevicesTable() {
+	for alias, device := range viper.GetStringMapString("db.devices") {
+		vals := strings.Split(device, ";")
+		userEmail := vals[0]
+		os := vals[1]
+		deviceFor, err := strconv.Atoi(vals[2])
+		if err != nil {
+			continue
+		}
+		mac := ""
+		if len(vals) >= 4 {
+			mac = vals[3]
+		}
+
+		user, err := idp.fetchUserByEmail(userEmail)
+		if err != nil {
+			continue
+		}
+
+		if dev, err := idp.fetchUserDeviceByAlias(user.UserID, alias); err == nil && dev != nil && dev.DeviceID != "" {
+			idpLogger.Warningf("user[%s] already has a device using alias: %s", user.UserID, alias)
+			continue
+		}
+
+		if _, err := idp.bindUserDevice(&pb.Device{
+			UserID: user.UserID,
+			Os:     os,
+			For:    pb.DeviceFor(deviceFor),
+			Mac:    mac,
+			Alias:  alias,
+		}); err != nil {
+			idpLogger.Errorf("pre bind user device return error: %v", err)
+			continue
+		}
+	}
 }
 
 // Start starts idprovider service
@@ -202,10 +272,7 @@ func (idp *IDP) isUserExist(username string) bool {
 
 // bcrypt md5(password)
 func (idp *IDP) encodePass(pass string) string {
-	h := md5.New()
-	h.Write([]byte(pass))
-
-	bpass, err := bcrypt.GenerateFromPassword(h.Sum(nil), bcrypt.DefaultCost)
+	bpass, err := bcrypt.GenerateFromPassword([]byte(encodeMD5(pass)), bcrypt.DefaultCost)
 	if err != nil {
 		idpLogger.Errorf("bcrypt.GenerateFromPassword() error: %v", err)
 		return ""
@@ -217,10 +284,7 @@ func (idp *IDP) encodePass(pass string) string {
 // compare bcrypt md5(password)
 // return true if password is right, otherwise return false.
 func (idp *IDP) verifyPass(pass string, hash string) bool {
-	h := md5.New()
-	h.Write([]byte(pass))
-
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), h.Sum(nil)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(encodeMD5(pass))); err != nil {
 		return false
 	}
 
@@ -242,6 +306,15 @@ func (idp *IDP) fetchUserByID(userID string) (*pb.User, error) {
 	return idp.db.fetchUserByID(userID)
 }
 
+// fetch user by email
+func (idp *IDP) fetchUserByEmail(email string) (*pb.User, error) {
+	if email == "" {
+		return nil, errors.New("invalid params")
+	}
+
+	return idp.db.fetchUserByEmail(email)
+}
+
 // fetch user devices using mac address,
 // we support one user can only have different mac address device
 func (idp *IDP) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error) {
@@ -250,6 +323,16 @@ func (idp *IDP) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error) 
 	}
 
 	return idp.db.fetchUserDevicesByMac(userID, mac)
+}
+
+// fetch user device using alias
+// one user can have different alias devices
+func (idp *IDP) fetchUserDeviceByAlias(userID, alias string) (*pb.Device, error) {
+	if userID == "" || alias == "" {
+		return nil, errors.New("invalid params")
+	}
+
+	return idp.db.fetchUserDeviceByAlias(userID, alias)
 }
 
 // bind a device 2 a user
