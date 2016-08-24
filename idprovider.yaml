@@ -9,7 +9,7 @@ server:
         gomaxprocs: -1
 
         # path to the OBC state directory and CA state subdirectory
-        rootpath: "/tmp/idprovider"
+        rootpath: "testdata"
         cadir: "ca"
 
         # port the CA services are listening on
@@ -17,6 +17,8 @@ server:
 
         # TLS certificate and key file paths
         tls:
+            # whether or not to setup tls connection
+            enabled: false
             cert:
                 file:
             key:
@@ -242,7 +244,7 @@ db:
     # sqlite3 db backend used to store records, if driver is sqlite3, this section is required.
     sqlite3:
         # where to store db file
-        dbpath: /tmp/idprovider
+        dbpath: testdata
     # the maximum number of connections in the idle connection pool. If <= 0, no idle connections are retained.
     maxIdle: 10
     # the maximum number of open connections to the database. If <= 0, then there is no limit on the number of open connections.

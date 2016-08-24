@@ -30,6 +30,10 @@ const (
 var rnd = rand.NewSource(time.Now().UnixNano())
 
 func randomString(n int) string {
+	return string(randomBytes(n))
+}
+
+func randomBytes(n int) []byte {
 	b := make([]byte, n)
 
 	for i, cache, remain := n-1, rnd.Int63(), letterIdxMax; i >= 0; {
@@ -44,5 +48,5 @@ func randomString(n int) string {
 		remain--
 	}
 
-	return string(b)
+	return b
 }

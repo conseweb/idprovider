@@ -23,7 +23,7 @@ import (
 func (t *TestCaptcha) TestStoreSetGet(c *check.C) {
 	s := NewMemoryStore(CollectNum, Expiration)
 	id := "captcha id"
-	d := RandomDigits(10)
+	d := randomBytes(10)
 	s.Set(id, d)
 	d2 := s.Get(id, false)
 	c.Check(d2, check.NotNil)
@@ -33,7 +33,7 @@ func (t *TestCaptcha) TestStoreSetGet(c *check.C) {
 func (t *TestCaptcha) TestStoreGetClear(c *check.C) {
 	s := NewMemoryStore(CollectNum, Expiration)
 	id := "captcha id"
-	d := RandomDigits(10)
+	d := randomBytes(10)
 	s.Set(id, d)
 	d2 := s.Get(id, true)
 	c.Check(d2, check.NotNil)
@@ -46,13 +46,13 @@ func (t *TestCaptcha) TestStoreGetClear(c *check.C) {
 func (t *TestCaptcha) BenchmarkStoreSet(c *check.C) {
 	s := NewMemoryStore(c.N, Expiration)
 	for i := 0; i < c.N; i++ {
-		s.Set(fmt.Sprintf("id_%d", i), RandomDigits(10))
+		s.Set(fmt.Sprintf("id_%d", i), randomBytes(10))
 	}
 }
 
 func (t *TestCaptcha) BenchmarkStoreGet(c *check.C) {
 	s := NewMemoryStore(CollectNum, Expiration)
-	s.Set("id", RandomDigits(10))
+	s.Set("id", randomBytes(10))
 	for i := 0; i < c.N; i++ {
 		s.Get("id", false)
 	}
