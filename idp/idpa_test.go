@@ -17,7 +17,7 @@ package idp
 
 import (
 	"fmt"
-	pb "github.com/conseweb/idprovider/protos"
+	pb "github.com/conseweb/common/protos"
 	"golang.org/x/net/context"
 	"gopkg.in/check.v1"
 	"runtime"

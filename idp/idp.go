@@ -20,7 +20,7 @@ import (
 	"errors"
 	"github.com/conseweb/idprovider/idp/captcha"
 	"github.com/conseweb/idprovider/idp/snowflake"
-	pb "github.com/conseweb/idprovider/protos"
+	pb "github.com/conseweb/common/protos"
 	"github.com/hyperledger/fabric/flogging"
 	"github.com/op/go-logging"
 	"github.com/satori/go.uuid"

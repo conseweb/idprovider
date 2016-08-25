@@ -17,7 +17,7 @@ package idp
 
 import (
 	"fmt"
-	pb "github.com/conseweb/idprovider/protos"
+	pb "github.com/conseweb/common/protos"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
