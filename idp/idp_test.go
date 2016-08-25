@@ -17,7 +17,7 @@ package idp
 
 import (
 	"github.com/conseweb/common/config"
-	pb "github.com/conseweb/idprovider/protos"
+	pb "github.com/conseweb/common/protos"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"gopkg.in/check.v1"

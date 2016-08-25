@@ -18,7 +18,7 @@ package idp
 import (
 	"database/sql"
 	"errors"
-	pb "github.com/conseweb/idprovider/protos"
+	pb "github.com/conseweb/common/protos"
 	"github.com/hyperledger/fabric/flogging"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/op/go-logging"
