@@ -18,9 +18,9 @@ package idp
 import (
 	"bytes"
 	"errors"
-	"github.com/conseweb/idprovider/idp/captcha"
-	"github.com/conseweb/idprovider/idp/snowflake"
+	"github.com/conseweb/common/captcha"
 	pb "github.com/conseweb/common/protos"
+	"github.com/conseweb/common/snowflake"
 	"github.com/hyperledger/fabric/flogging"
 	"github.com/op/go-logging"
 	"github.com/satori/go.uuid"
