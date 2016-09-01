@@ -18,6 +18,7 @@ package idp
 import (
 	"github.com/conseweb/common/config"
 	pb "github.com/conseweb/common/protos"
+	"github.com/hyperledger/fabric/core/crypto"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"gopkg.in/check.v1"
@@ -42,6 +43,7 @@ var _ = check.Suite(&TestIDP{})
 
 func (t *TestIDP) SetUpSuite(c *check.C) {
 	config.LoadConfig("IDPROVIDER", "idprovider", "github.com/conseweb/idprovider")
+	c.Check(crypto.Init(), check.IsNil)
 
 	t.id = NewIDP()
 

@@ -18,16 +18,20 @@ package idp
 import (
 	"fmt"
 	pb "github.com/conseweb/common/protos"
+	"github.com/conseweb/common/utils"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/check.v1"
 	"runtime"
 	"time"
+	"github.com/conseweb/common/crypto"
+	"github.com/hyperledger/fabric/core/crypto/primitives"
+	"crypto/x509"
 )
 
 // NewClientConnectionWithAddress Returns a new grpc.ClientConn to the given address.
-func NewClientConnectionWithAddress(address string, block bool, tslEnabled bool, creds credentials.TransportCredentials) (*grpc.ClientConn, error) {
+func NewClientConnectionWithAddress(address string, block bool, tslEnabled bool, creds credentials.TransportAuthenticator) (*grpc.ClientConn, error) {
 	var opts []grpc.DialOption
 	if tslEnabled {
 		opts = append(opts, grpc.WithTransportCredentials(creds))
@@ -78,60 +82,80 @@ func (t *TestIDP) TestVerifyCaptchaWrong(c *check.C) {
 
 func (t *TestIDP) TestRegisterUser(c *check.C) {
 	// test1
-	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+	req1 := &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
 		SignUp:     "13800000000",
 		Nick:       "13800000000",
 		Pass:       "13800000000",
-	})
+	}
+	req1.Wpub = []byte("13800000000")
+	priv, err := primitives.NewECDSAKey()
+	c.Check(err, check.IsNil)
+
+	pubraw, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	c.Check(err, check.IsNil)
+	req1.Spub = pubraw
+
+	c.Check(crypto.SignGRPCRequest(req1, priv), check.IsNil)
+	c.Logf("req1: %+v\n", req1)
+
+	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), req1)
 	c.Check(err1, check.IsNil)
 	c.Check(rsp1, check.NotNil)
 	c.Check(rsp1.Error.OK(), check.Equals, true)
 	c.Check(rsp1.User.Nick, check.Equals, "13800000000")
 
 	// test2
-	rsp2, err2 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
-		SignUpType: pb.SignUpType_MOBILE,
-		SignUp:     "13800000000",
-		Nick:       "13800000000",
-		Pass:       "13800000000",
-	})
+	rsp2, err2 := t.idppCli.RegisterUser(context.Background(), req1)
 	c.Check(err2, check.IsNil)
 	c.Check(rsp2, check.NotNil)
 	c.Check(rsp2.Error.OK(), check.Equals, false)
-	c.Check(rsp2.Error.Error(), check.Equals, "Error[ALREADY_SIGNUP]: 13800000000 is already a user")
 }
 
 func (t *TestIDP) TestBindUserDevice(c *check.C) {
 	// test register user
-	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+	req1 := &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
 		SignUp:     "13800000001",
 		Nick:       "13800000001",
 		Pass:       "13800000001",
-	})
+	}
+
+	req1.Wpub = []byte("13800000001")
+	priv, err := primitives.NewECDSAKey()
+	c.Check(err, check.IsNil)
+
+	pubraw, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	c.Check(err, check.IsNil)
+	req1.Spub = pubraw
+
+	c.Check(crypto.SignGRPCRequest(req1, priv), check.IsNil)
+
+	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), req1)
 	c.Check(err1, check.IsNil)
 	c.Check(rsp1, check.NotNil)
 	c.Check(rsp1.Error.OK(), check.Equals, true)
 	c.Check(rsp1.User.Nick, check.Equals, "13800000001")
 
 	// test bind user device ok
-	rsp2, err2 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
+	req2 := &pb.BindDeviceReq{
 		UserID: rsp1.User.UserID,
 		Os:     fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
 		For:    pb.DeviceFor_FARMER,
-		Mac:    getHardwareAddr(),
-	})
+		Mac:    utils.GetHardwareAddr(),
+	}
+
+	req2.Wpub = []byte("binduserdeviceok")
+	req2.Spub = []byte("atthistimenotuse")
+	c.Check(crypto.SignGRPCRequest(req2, priv), check.IsNil)
+
+	rsp2, err2 := t.idppCli.BindDeviceForUser(context.Background(), req2)
 	c.Check(err2, check.IsNil)
 	c.Check(rsp2, check.NotNil)
 	c.Check(rsp2.Error.OK(), check.Equals, true)
 
-	rsp3, err3 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
-		UserID: rsp1.User.UserID,
-		Os:     fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
-		For:    pb.DeviceFor_FARMER,
-		Mac:    getHardwareAddr(),
-	})
+	// test bind user device wrong
+	rsp3, err3 := t.idppCli.BindDeviceForUser(context.Background(), req2)
 
 	c.Check(err3, check.IsNil)
 	c.Check(rsp3, check.NotNil)

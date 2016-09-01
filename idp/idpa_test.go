@@ -16,8 +16,12 @@ limitations under the License.
 package idp
 
 import (
+	"crypto/x509"
 	"fmt"
+	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
+	"github.com/conseweb/common/utils"
+	"github.com/hyperledger/fabric/core/crypto/primitives"
 	"golang.org/x/net/context"
 	"gopkg.in/check.v1"
 	"runtime"
@@ -25,12 +29,24 @@ import (
 
 func (t *TestIDP) TestVerifyDevice(c *check.C) {
 	// test register user
-	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), &pb.RegisterUserReq{
+	req1 := &pb.RegisterUserReq{
 		SignUpType: pb.SignUpType_MOBILE,
 		SignUp:     "13800000002",
 		Nick:       "13800000002",
 		Pass:       "13800000002",
-	})
+	}
+
+	req1.Wpub = []byte("13800000002")
+	priv, err := primitives.NewECDSAKey()
+	c.Check(err, check.IsNil)
+
+	pubraw, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	c.Check(err, check.IsNil)
+	req1.Spub = pubraw
+
+	c.Check(crypto.SignGRPCRequest(req1, priv), check.IsNil)
+
+	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), req1)
 	c.Check(err1, check.IsNil)
 	c.Check(rsp1, check.NotNil)
 	c.Check(rsp1.Error.OK(), check.Equals, true)
@@ -38,10 +54,10 @@ func (t *TestIDP) TestVerifyDevice(c *check.C) {
 
 	// test bind user device ok
 	rsp2, err2 := t.idppCli.BindDeviceForUser(context.Background(), &pb.BindDeviceReq{
-		UserID:    rsp1.User.UserID,
-		Os:        fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
-		For:       pb.DeviceFor_FARMER,
-		Mac:       getHardwareAddr(),
+		UserID: rsp1.User.UserID,
+		Os:     fmt.Sprintf("%s, %s", runtime.GOOS, runtime.GOARCH),
+		For:    pb.DeviceFor_FARMER,
+		Mac:    utils.GetHardwareAddr(),
 	})
 	c.Check(err2, check.IsNil)
 	c.Check(rsp2, check.NotNil)

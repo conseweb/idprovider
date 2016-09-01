@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
+	"fmt"
 )
 
 var (
@@ -90,7 +91,9 @@ func (s *sqliteImpl) initDB() error {
 			mobile VARCHAR(20),
 			nick VARCHAR(20),
 			pass VARCHAR(255),
-			type INTEGER
+			type INTEGER,
+			wpub BLOB,
+			spub BLOB
 		)
 	`); err != nil {
 		return err
@@ -106,7 +109,9 @@ func (s *sqliteImpl) initDB() error {
 			os VARCHAR(32),
 			for INTEGER,
 			mac VARCHAR(64),
-			alias VARCHAR(64)
+			alias VARCHAR(64),
+			wpub BLOB,
+			spub BLOB
 		)
 	`); err != nil {
 		return err
@@ -129,7 +134,13 @@ func (s *sqliteImpl) isUserExist(username string) bool {
 }
 
 func (s *sqliteImpl) registerUser(user *pb.User) (*pb.User, error) {
-	if _, err := s.db.Exec("INSERT INTO users(id, email, mobile, nick, pass, type) VALUES(?, ?, ?, ?, ?, ?)", user.UserID, user.Email, user.Mobile, user.Nick, user.Pass, user.UserType); err != nil {
+	// check whether user pub key already been token.
+	var row int
+	if err := s.db.QueryRow("SELECT row FROM users WHERE wpub = ?", user.Wpub).Scan(&row); err == nil && row > 0 {
+		return nil, fmt.Errorf("user wallet public key already been token: %s", user.Wpub)
+	}
+
+	if _, err := s.db.Exec("INSERT INTO users(id, email, mobile, nick, pass, type, wpub, spub) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", user.UserID, user.Email, user.Mobile, user.Nick, user.Pass, user.UserType, user.Wpub, user.Spub); err != nil {
 		dbLogger.Errorf("insert into user db error: %v", err)
 		return nil, err
 	}
@@ -144,7 +155,7 @@ func (s *sqliteImpl) fetchUserByID(userID string) (*pb.User, error) {
 	}
 
 	u := &pb.User{}
-	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type FROM users WHERE id = ?", userID).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType); err != nil {
+	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type, wpub, spub FROM users WHERE id = ?", userID).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType, &u.Wpub, &u.Spub); err != nil {
 		return nil, err
 	}
 
@@ -158,7 +169,7 @@ func (s *sqliteImpl) fetchUserByEmail(email string) (*pb.User, error) {
 	}
 
 	u := &pb.User{}
-	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type FROM users WHERE email = ?", email).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType); err != nil {
+	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type, wpub, spub FROM users WHERE email = ?", email).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType, &u.Wpub, &u.Spub); err != nil {
 		return nil, err
 	}
 
@@ -171,7 +182,7 @@ func (s *sqliteImpl) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, er
 		return nil, errors.New("invalid params")
 	}
 
-	rows, err := s.db.Query("SELECT id, userID, os, for, mac, alias From devices WHERE userID = ? AND mac = ?", userID, mac)
+	rows, err := s.db.Query("SELECT id, userID, os, for, mac, alias, wpub, spub From devices WHERE userID = ? AND mac = ?", userID, mac)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +191,7 @@ func (s *sqliteImpl) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, er
 	devices := make([]*pb.Device, 0)
 	for rows.Next() {
 		device := &pb.Device{}
-		err := rows.Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias)
+		err := rows.Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias, &device.Wpub, &device.Spub)
 		if err != nil {
 			continue
 		}
@@ -198,7 +209,7 @@ func (s *sqliteImpl) fetchUserDeviceByAlias(userID, alias string) (*pb.Device, e
 	}
 
 	device := &pb.Device{}
-	if err := s.db.QueryRow("SELECT id, userID, os, for, mac, alias FROM devices WHERE userID=? AND alias = ?", userID, alias).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias); err != nil {
+	if err := s.db.QueryRow("SELECT id, userID, os, for, mac, alias, wpub, spub FROM devices WHERE userID=? AND alias = ?", userID, alias).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias, &device.Wpub, &device.Spub); err != nil {
 		dbLogger.Debugf("fetching user device by alias return error: %v", err)
 		return nil, err
 	}
@@ -212,7 +223,13 @@ func (s *sqliteImpl) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 		return nil, errors.New("invalid params")
 	}
 
-	if _, err := s.db.Exec("INSERT INTO devices (id, userID, os, for, mac, alias) VALUES (?, ?, ?, ?, ?, ?)", dev.DeviceID, dev.UserID, dev.Os, dev.For, dev.Mac, dev.Alias); err != nil {
+	// check whether device pub key has already been token
+	var row int
+	if err := s.db.QueryRow("SELECT row FROM devices WHERE wpub = ?", dev.Wpub).Scan(&row); err == nil && row > 0 {
+		return nil, errors.New("device public key has already been token.")
+	}
+
+	if _, err := s.db.Exec("INSERT INTO devices(id, userID, os, for, mac, alias, wpub, spub) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", dev.DeviceID, dev.UserID, dev.Os, dev.For, dev.Mac, dev.Alias, dev.Wpub, dev.Spub); err != nil {
 		dbLogger.Errorf("bind user device ret error: %v", err)
 		return nil, err
 	}
@@ -227,7 +244,7 @@ func (s *sqliteImpl) fetchDeviceByID(deviceID string) (*pb.Device, error) {
 	}
 	device := &pb.Device{}
 
-	if err := s.db.QueryRow("SELECT id, userID, os, for, mac, alias FROM devices WHERE id = ?", deviceID).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias); err != nil {
+	if err := s.db.QueryRow("SELECT id, userID, os, for, mac, alias, wpub, spub FROM devices WHERE id = ?", deviceID).Scan(&device.DeviceID, &device.UserID, &device.Os, &device.For, &device.Mac, &device.Alias, &device.Wpub, &device.Spub); err != nil {
 		dbLogger.Warningf("using deviceID: %s fetching device return error: %v", deviceID, err)
 		return nil, err
 	}

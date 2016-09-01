@@ -253,12 +253,12 @@ db:
     # pre register user list format:
     # nick: email pass type
     users:
-        mojingInc: mojing@blockchain-university.org;12345678;1
-        魔镜科技:   mojing@qkldx.net;12345678;1
-        testUser:  test@example.com;1234567890;0
+        mojingInc: mojing@blockchain-university.org;12345678;1;wpubkeymojing
+        魔镜科技:   mojing@qkldx.net;12345678;1;wpubkey魔镜
+        testUser:  test@example.com;1234567890;0;wpubkeyTestUser
     # pre defined devices
     # list format:
     # device alias: "user nick" osType "osVersion" deviceFor "mac address"
     devices:
-        supervisor_1: mojing@blockchain-university.org;drawn amd64;3;60:03:08:8a:18:fa
-        supervisor_2: mojing@qkldx.net;drawn amd64;3;60:03:08:8a:18:fa
+        supervisor_1: mojing@blockchain-university.org;drawn amd64;3;60:03:08:8a:18:fa;wpubkeysupervisor_1
+        supervisor_2: mojing@qkldx.net;drawn amd64;3;60:03:08:8a:18:fa;wpubkeysupervisor_2
