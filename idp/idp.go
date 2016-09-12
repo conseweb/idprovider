@@ -216,7 +216,7 @@ func (idp *IDP) startIDPA(srv *grpc.Server) {
 func (idp *IDP) Stop() error {
 	idpLogger.Info("Stopping IDP services...")
 	if idp.gRPCServer != nil {
-		idp.gRPCServer.GracefulStop()
+		idp.gRPCServer.Stop()
 	}
 
 	if idp.db != nil {
