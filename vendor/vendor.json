@@ -1,0 +1,31 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "Rj8GhcQtVgSFoeQP+xB8VdbIul0=",
+			"path": "github.com/conseweb/common/captcha",
+			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
+			"revisionTime": "2016-09-11T16:00:05Z"
+		},
+		{
+			"checksumSHA1": "Cw0KsMQOflIYZJyuNEVppoXmtxM=",
+			"path": "github.com/conseweb/common/config",
+			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
+			"revisionTime": "2016-09-11T16:00:05Z"
+		},
+		{
+			"checksumSHA1": "u15SgGcnEY9WczLCghwi0RnN1NY=",
+			"path": "github.com/conseweb/common/protos",
+			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
+			"revisionTime": "2016-09-11T16:00:05Z"
+		},
+		{
+			"checksumSHA1": "ep34smMUtKgCVaMUEOFlvkro4BU=",
+			"path": "github.com/conseweb/common/snowflake",
+			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
+			"revisionTime": "2016-09-11T16:00:05Z"
+		}
+	],
+	"rootPath": "github.com/conseweb/idprovider"
+}
