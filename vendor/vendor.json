@@ -10,26 +10,44 @@
 		{
 			"checksumSHA1": "Rj8GhcQtVgSFoeQP+xB8VdbIul0=",
 			"path": "github.com/conseweb/common/captcha",
-			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
-			"revisionTime": "2016-09-11T16:00:05Z"
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
 		},
 		{
 			"checksumSHA1": "Cw0KsMQOflIYZJyuNEVppoXmtxM=",
 			"path": "github.com/conseweb/common/config",
-			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
-			"revisionTime": "2016-09-11T16:00:05Z"
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
 		},
 		{
-			"checksumSHA1": "u15SgGcnEY9WczLCghwi0RnN1NY=",
+			"checksumSHA1": "SreQCHRnvdgvDVHWAFnPC2uYS2k=",
+			"path": "github.com/conseweb/common/crypto",
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
+		},
+		{
+			"checksumSHA1": "WIVfyG2AFsvTuNhDk0Bs78mUSWg=",
 			"path": "github.com/conseweb/common/protos",
-			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
-			"revisionTime": "2016-09-11T16:00:05Z"
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
+		},
+		{
+			"checksumSHA1": "pEQXQfTMNk83he3Ux6qgSKLk030=",
+			"path": "github.com/conseweb/common/semaphore",
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
 		},
 		{
 			"checksumSHA1": "ep34smMUtKgCVaMUEOFlvkro4BU=",
 			"path": "github.com/conseweb/common/snowflake",
-			"revision": "fce4e29c782dff98d4300d69d1009aefcb8b792e",
-			"revisionTime": "2016-09-11T16:00:05Z"
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
+		},
+		{
+			"checksumSHA1": "K9YcJvadiEpTnFV/JJOHZpQpQl0=",
+			"path": "github.com/conseweb/common/utils",
+			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
+			"revisionTime": "2016-09-13T09:01:37Z"
 		},
 		{
 			"checksumSHA1": "Sy4sqGrXluZ7FeasNpF89aMLcHA=",
@@ -331,6 +349,12 @@
 			"checksumSHA1": "gbW0f3IRg4wsuHITKgfH+VsxWK0=",
 			"path": "google/protobuf",
 			"revision": ""
+		},
+		{
+			"checksumSHA1": "YzHkxW3fGe5Oc5AVatDNn1g5Ung=",
+			"path": "gopkg.in/check.v1",
+			"revision": "4f90aeace3a26ad7021961c297b22c42160c7b25",
+			"revisionTime": "2016-01-05T16:49:36Z"
 		},
 		{
 			"checksumSHA1": "avLNreOcKkPxEnkswUbJYnpbeg8=",

@@ -16,22 +16,22 @@ limitations under the License.
 package idp
 
 import (
+	"crypto/x509"
 	"fmt"
+	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
 	"github.com/conseweb/common/utils"
+	"github.com/hyperledger/fabric/core/crypto/primitives"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/check.v1"
 	"runtime"
 	"time"
-	"github.com/conseweb/common/crypto"
-	"github.com/hyperledger/fabric/core/crypto/primitives"
-	"crypto/x509"
 )
 
 // NewClientConnectionWithAddress Returns a new grpc.ClientConn to the given address.
-func NewClientConnectionWithAddress(address string, block bool, tslEnabled bool, creds credentials.TransportAuthenticator) (*grpc.ClientConn, error) {
+func NewClientConnectionWithAddress(address string, block bool, tslEnabled bool, creds credentials.TransportCredentials) (*grpc.ClientConn, error) {
 	var opts []grpc.DialOption
 	if tslEnabled {
 		opts = append(opts, grpc.WithTransportCredentials(creds))
@@ -57,6 +57,17 @@ func (t *TestIDP) TestAcquireCaptchaOK(c *check.C) {
 	c.Check(err, check.IsNil)
 	c.Check(rsp, check.NotNil)
 	c.Check(rsp.Error.OK(), check.Equals, true)
+
+	rsp1, err := t.idppCli.AcquireCaptcha(context.Background(), &pb.AcquireCaptchaReq{
+		SignUpType: pb.SignUpType_MOBILE,
+		SignUp: "13800000000",
+	})
+
+	c.Check(err, check.IsNil)
+	c.Check(rsp1, check.NotNil)
+	c.Check(rsp1.Error.OK(), check.Equals, true)
+
+	time.Sleep(time.Second)
 }
 
 func (t *TestIDP) TestAcquireCaptchaWrong(c *check.C) {

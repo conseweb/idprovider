@@ -18,6 +18,10 @@ package idp
 import (
 	"bytes"
 	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/conseweb/common/captcha"
 	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
@@ -29,10 +33,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"gopkg.in/gomail.v2"
-	"html/template"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -50,6 +50,8 @@ type IDP struct {
 	gRPCServer *grpc.Server
 	mailDialer *gomail.Dialer
 	mailChan   chan *gomail.Message
+	smsChan    chan *smsMessage
+
 	captchaLen int
 }
 
@@ -108,6 +110,14 @@ func NewIDP() *IDP {
 	}
 	idp.mailChan = make(chan *gomail.Message, messagePool)
 	idp.mailDialer = gomail.NewDialer(viper.GetString("mail.host"), viper.GetInt("mail.port"), viper.GetString("mail.user"), viper.GetString("mail.pass"))
+
+	// init sms
+	idpLogger.Info("IDP init sms")
+	smsPool := viper.GetInt("sms.messagePool")
+	if smsPool <= 0 {
+		smsPool = 100
+	}
+	idp.smsChan = make(chan *smsMessage, smsPool)
 
 	// init captcha
 	idpLogger.Info("IDP init captcha")
@@ -203,6 +213,7 @@ func (idp *IDP) Start(srv *grpc.Server) {
 	idpLogger.Info("Starting IDProvider...")
 
 	go idp.asyncSendEmail()
+	go idp.asyncSendSMS()
 	idp.startIDPP(srv)
 	idp.startIDPA(srv)
 	idp.gRPCServer = srv
@@ -235,6 +246,7 @@ func (idp *IDP) Stop() error {
 		}
 	}
 
+	// close mail chan
 	close(idp.mailChan)
 	for {
 		mailLen := len(idp.mailChan)
@@ -242,35 +254,24 @@ func (idp *IDP) Stop() error {
 			break
 		}
 
-		idpLogger.Infof("IDP mail chanel isn't empty: %d, waitting...", mailLen)
+		idpLogger.Infof("IDP mail channel isn't empty: %d, waiting...", mailLen)
 		time.Sleep(time.Second)
+	}
+
+	// close sms chan
+	close(idp.smsChan)
+	for {
+		smsLen := len(idp.smsChan)
+		if smsLen == 0 {
+			break
+		}
+
+		idpLogger.Infof("IDP sms channel isn't empty: %d, waiting...", smsLen)
 	}
 
 	idpLogger.Info("IDP stopped")
 
 	return nil
-}
-
-func (idp *IDP) sendCaptcha(signUpType pb.SignUpType, signUp string) error {
-	var err error
-	switch signUpType {
-	case pb.SignUpType_EMAIL:
-		err = idp.sendCaptchaEmail(signUp)
-	case pb.SignUpType_MOBILE:
-		err = idp.sendCaptchaSMS(signUp)
-	}
-
-	if err != nil {
-		idpLogger.Errorf("sending captcha return error: %v", err)
-	}
-
-	return err
-}
-
-// verify captcha
-func (idp *IDP) verifyCaptcha(signup, capt string) bool {
-	idpLogger.Debugf("IDP verify captcha: [%s, %s]", signup, capt)
-	return captcha.VerifyString(signup, capt)
 }
 
 // check the db whether the username is already has one.
@@ -360,91 +361,4 @@ func (idp *IDP) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 // fetch device using device id
 func (idp *IDP) fetchDeviceByID(deviceID string) (*pb.Device, error) {
 	return idp.db.fetchDeviceByID(deviceID)
-}
-
-var (
-	captchaHtmlTpl = `
-		<html><body><p>captcha:<span>{{.captcha}}</span></p></body></html>
-	`
-)
-
-func (idp *IDP) sendCaptchaEmail(email string) error {
-	// only for test, if email contains '@example', just return nil
-	if strings.Contains(email, "@example") {
-		return nil
-	}
-
-	capt := captcha.NewLen(email, idp.captchaLen)
-	idpLogger.Debugf("IDP generate a new captcha:[%s:%v]", email, capt)
-
-	tmpl, err := template.New(email).Parse(captchaHtmlTpl)
-	if err != nil {
-		idpLogger.Errorf("parese captcha html template error: %v", err)
-		return err
-	}
-
-	writer := bytes.NewBufferString("")
-	err = tmpl.Execute(writer, map[string]interface{}{
-		"captcha": capt,
-	})
-	if err != nil {
-		idpLogger.Errorf("execute html template return error: %v", err)
-		return err
-	}
-
-	m := gomail.NewMessage()
-	m.SetHeader("From", viper.GetString("mail.user"))
-	m.SetHeader("To", email)
-	m.SetHeader("Subject", viper.GetString("mail.captchaEmailSubject"))
-	m.SetBody("text/html", writer.String())
-
-	idp.mailChan <- m
-
-	return nil
-}
-
-func (idp *IDP) sendCaptchaSMS(mobile string) error {
-	return nil
-}
-
-func (idp *IDP) asyncSendEmail() {
-	idpLogger.Info("IDP mail sender started")
-
-	var s gomail.SendCloser
-	var err error
-	ticker := time.NewTicker(time.Second * 30)
-	open := false
-
-	for {
-		select {
-		case m, ok := <-idp.mailChan:
-			if !ok {
-				continue
-			}
-
-			if !open {
-				if s, err = idp.mailDialer.Dial(); err != nil {
-					idpLogger.Errorf("mail dialer dial error: %v", err)
-					continue
-				}
-
-				open = true
-			}
-
-			if err = gomail.Send(s, m); err != nil {
-				idpLogger.Errorf("mail send error: %v", err)
-				continue
-			}
-
-			idpLogger.Debugf("sending an email to %v", m.GetHeader("To"))
-		case <-ticker.C:
-			if open {
-				if err = s.Close(); err != nil {
-					idpLogger.Errorf("close mail sender error: %v", err)
-				}
-
-				open = false
-			}
-		}
-	}
 }
