@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/conseweb/common/captcha"
+	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
 	"github.com/conseweb/common/snowflake"
 	"github.com/hyperledger/fabric/flogging"
@@ -128,7 +129,7 @@ func (idp *IDP) populateUsersTable() {
 	for nick, user := range viper.GetStringMapString("db.users") {
 		vals := strings.Split(user, ";")
 		email := vals[0]
-		pass := encodeMD5(vals[1])
+		pass := crypto.MD5Hash(vals[1])
 		userType, err := strconv.Atoi(vals[2])
 		if err != nil {
 			idpLogger.Errorf("convert userType string 2 int return error: %v", err)
@@ -139,11 +140,13 @@ func (idp *IDP) populateUsersTable() {
 			continue
 		}
 
+		idpLogger.Debugf("populate user: %v", vals)
 		if _, err := idp.registerUser(&pb.User{
 			Email:    email,
 			Pass:     pass,
 			Nick:     nick,
 			UserType: pb.UserType(userType),
+			Wpub:     bytes.NewBufferString(vals[3]).Bytes(),
 		}); err != nil {
 			idpLogger.Errorf("pre register user return error: %v", err)
 			continue
@@ -165,6 +168,10 @@ func (idp *IDP) populateUserDevicesTable() {
 		if len(vals) >= 4 {
 			mac = vals[3]
 		}
+		wpub := ""
+		if len(vals) >= 5 {
+			wpub = vals[4]
+		}
 
 		user, err := idp.fetchUserByEmail(userEmail)
 		if err != nil {
@@ -176,12 +183,14 @@ func (idp *IDP) populateUserDevicesTable() {
 			continue
 		}
 
+		idpLogger.Debugf("populateUserDevice: %v", vals)
 		if _, err := idp.bindUserDevice(&pb.Device{
 			UserID: user.UserID,
 			Os:     os,
 			For:    pb.DeviceFor(deviceFor),
 			Mac:    mac,
 			Alias:  alias,
+			Wpub:   bytes.NewBufferString(wpub).Bytes(),
 		}); err != nil {
 			idpLogger.Errorf("pre bind user device return error: %v", err)
 			continue
@@ -272,7 +281,7 @@ func (idp *IDP) isUserExist(username string) bool {
 
 // bcrypt md5(password)
 func (idp *IDP) encodePass(pass string) string {
-	bpass, err := bcrypt.GenerateFromPassword([]byte(encodeMD5(pass)), bcrypt.DefaultCost)
+	bpass, err := bcrypt.GenerateFromPassword([]byte(crypto.MD5Hash(pass)), bcrypt.DefaultCost)
 	if err != nil {
 		idpLogger.Errorf("bcrypt.GenerateFromPassword() error: %v", err)
 		return ""
@@ -284,7 +293,7 @@ func (idp *IDP) encodePass(pass string) string {
 // compare bcrypt md5(password)
 // return true if password is right, otherwise return false.
 func (idp *IDP) verifyPass(pass string, hash string) bool {
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(encodeMD5(pass))); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(crypto.MD5Hash(pass))); err != nil {
 		return false
 	}
 
@@ -295,6 +304,7 @@ func (idp *IDP) verifyPass(pass string, hash string) bool {
 func (idp *IDP) registerUser(user *pb.User) (*pb.User, error) {
 	user.UserID = uuid.NewV1().String()
 	user.Pass = idp.encodePass(user.Pass)
+
 	return idp.db.registerUser(user)
 }
 

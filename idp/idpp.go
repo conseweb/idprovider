@@ -16,6 +16,7 @@ limitations under the License.
 package idp
 
 import (
+	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
 	"github.com/op/go-logging"
 	"golang.org/x/net/context"
@@ -76,12 +77,23 @@ RET:
 
 // Register a user
 func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*pb.RegisterUserRsp, error) {
+	idppLogger.Debug("idpp gRPC: RegisterUser")
+
 	rsp := &pb.RegisterUserRsp{
 		Error: pb.ResponseOK(),
 	}
 
 	// declaration field
 	var user *pb.User
+
+	// 0. check signature
+	if err := crypto.VerifyGRPCRequest(req, req.Spub); err != nil {
+		idppLogger.Errorf("parsePKIPublicKey error: %v", err)
+
+		rsp.Error = pb.NewError(pb.ErrorType_INVALID_SIGNATURE, err.Error())
+
+		goto RET
+	}
 
 	// 1. verify already user
 	if idpp.idp.isUserExist(req.SignUp) {
@@ -99,6 +111,9 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	}
 	user.Pass = req.Pass
 	user.Nick = req.Nick
+	user.UserType = req.UserType
+	user.Wpub = req.Wpub
+	user.Spub = req.Spub
 	if u, err := idpp.idp.registerUser(user); err != nil {
 		idppLogger.Debugf("registerUser return error: %v", err)
 		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
@@ -118,10 +133,17 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	}
 
 	// 1. verify user identity
-	if _, err := idpp.idp.fetchUserByID(req.UserID); err != nil {
+	if user, err := idpp.idp.fetchUserByID(req.UserID); err != nil {
 		idppLogger.Errorf("verify user identity error: %v", err)
 		rsp.Error = pb.NewError(pb.ErrorType_INVALID_USERID, err.Error())
 		goto RET
+	} else {
+		// 0. check signature
+		if err := crypto.VerifyGRPCRequest(req, user.Spub); err != nil {
+			idppLogger.Errorf("parsePKIPublicKey error: %v", err)
+			rsp.Error = pb.NewError(pb.ErrorType_INVALID_SIGNATURE, err.Error())
+			goto RET
+		}
 	}
 
 	// 2. verify device exist
@@ -153,6 +175,8 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 		For:    req.For,
 		Mac:    req.Mac,
 		Alias:  req.Alias,
+		Wpub:   req.Wpub,
+		Spub:   req.Spub,
 	}); err != nil {
 		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
