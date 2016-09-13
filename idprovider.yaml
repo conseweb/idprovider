@@ -209,30 +209,46 @@ snowflake:
 #
 ########################################################################################################################
 captcha:
-    # how long the captcha holds the digits
-    length: 6
-    # how long id/value pair will get expired
-    expiration: 10m
-    # how many id/value pair can hold into captcha store
-    collectNum: 1000
+  # how long the captcha holds the digits
+  length: 6
+  # how long id/value pair will get expired
+  expiration: 10m
+  # how many id/value pair can hold into captcha store
+  collectNum: 1000
 ########################################################################################################################
 #
 # mail section
 #
 ########################################################################################################################
 mail:
-    # smtp mail host
-    host: smtp.mxhichina.com
-    # smtp mail port
-    port: 25
-    # smtp sender username
-    user: zhaoming@qkldx.net
-    # smtp sender password
-    pass: QAZwsx123
-    # how many messages can hold in the channel which waitting for send.
-    messagePool: 100
-    # when sending captcha email, the subject of email
-    captchaEmailSubject: please verify your email
+  # smtp mail host
+  host: smtp.mxhichina.com
+  # smtp mail port
+  port: 25
+  # smtp sender username
+  user: zhaoming@qkldx.net
+  # smtp sender password
+  pass: QAZwsx123
+  # how many messages can hold in the channel waiting for send.
+  messagePool: 100
+  # when sending captcha email, the subject of email
+  captchaEmailSubject: please verify your email
+  # working thread
+  worker: 8
+########################################################################################################################
+#
+# sms section
+#
+########################################################################################################################
+sms:
+  # sms account name
+  account: VIP_mjkj
+  # sms account password
+  password: Tch123456
+  # how many messages can hold in the channel waiting for send
+  messagePool: 100
+  # working thread
+  worker: 8
 ########################################################################################################################
 #
 # db section

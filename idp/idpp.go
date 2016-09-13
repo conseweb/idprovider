@@ -32,6 +32,7 @@ type IDPP struct {
 
 // Acquire email/tel captcha
 func (idpp *IDPP) AcquireCaptcha(ctx context.Context, req *pb.AcquireCaptchaReq) (*pb.AcquireCaptchaRsp, error) {
+	idppLogger.Debugf("gRPC AcquireCaptcha, request: %+v", req)
 	rsp := &pb.AcquireCaptchaRsp{
 		Error: pb.ResponseOK(),
 	}

@@ -45,6 +45,10 @@ enum ErrorType {
     FARMER_CHALLENGE_FAIL = 11;
     // invalid signature
     INVALID_SIGNATURE = 12;
+    // not in lottery interval
+    NOT_IN_LOTTERY_INTERVAL = 13;
+    // already lottery
+    ALREADY_RECEIVED_LOTTERY = 14;
 }
 
 message Error {
