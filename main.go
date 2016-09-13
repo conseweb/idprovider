@@ -59,7 +59,7 @@ func main() {
 	logger.Infof("CA Server (" + viper.GetString("server.version") + ")")
 
 	aca = ca.NewACA()
-	eca = ca.NewECA()
+	eca = ca.NewECA(aca)
 	tca = ca.NewTCA(eca)
 	tlsca = ca.NewTLSCA(eca)
 	id = idp.NewIDP()
