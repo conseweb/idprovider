@@ -26,6 +26,12 @@
 			"revisionTime": "2016-09-13T09:01:37Z"
 		},
 		{
+			"checksumSHA1": "6d3abFkyDClJUWieuu+Aol8P/rI=",
+			"path": "github.com/conseweb/common/exec",
+			"revision": "10085fd543d348226dcb8d4d83e6d54bbd76cf80",
+			"revisionTime": "2016-09-13T11:31:10Z"
+		},
+		{
 			"checksumSHA1": "WIVfyG2AFsvTuNhDk0Bs78mUSWg=",
 			"path": "github.com/conseweb/common/protos",
 			"revision": "1b8f941122aac4546e6e0e93defb88bf1db09da8",
