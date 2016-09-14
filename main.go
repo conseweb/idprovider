@@ -17,10 +17,10 @@ package main
 
 import (
 	"net"
-	"os"
 	"runtime"
 
 	"github.com/conseweb/common/config"
+	"github.com/conseweb/common/exec"
 	"github.com/conseweb/idprovider/idp"
 	"github.com/hyperledger/fabric/core/crypto"
 	"github.com/hyperledger/fabric/flogging"
@@ -29,8 +29,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"os/signal"
-	"syscall"
 )
 
 var (
@@ -89,29 +87,9 @@ func main() {
 		logger.Fatalf("Fail to start IDProvider Server: %s", err)
 	}
 
-	go handleSignal()
-	srv.Serve(lis)
-}
-
-func handleSignal() {
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
-	for {
-		s := <-sigChan
-		logger.Infof("Server receive signal: %v", s)
-
-		switch s {
-		case syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-			logger.Infof("Server is graceful shutdown...")
-
-			aca.Stop()
-			eca.Stop()
-			tca.Stop()
-			tlsca.Stop()
-			id.Stop()
-
-			logger.Info("Server has shutdown.")
-		}
-	}
+	go srv.Serve(lis)
+	exec.HandleSignal(aca.Stop, func() error {
+		eca.Stop()
+		return nil
+	}, tca.Stop, tlsca.Stop, id.Stop)
 }
