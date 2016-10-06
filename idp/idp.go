@@ -27,6 +27,7 @@ import (
 	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
 	"github.com/conseweb/common/snowflake"
+	"github.com/conseweb/idprovider/idp/db"
 	"github.com/hyperledger/fabric/flogging"
 	"github.com/op/go-logging"
 	"github.com/satori/go.uuid"
@@ -42,11 +43,13 @@ const (
 
 var (
 	idpLogger = logging.MustGetLogger("idp")
+
+	ErrInvalidParams = errors.New("invalid params")
 )
 
 // IDP holds a snowflake id generator and a db handler
 type IDP struct {
-	db         dbAdapter
+	dbAdapter  db.DBAdapter
 	sf         *snowflake.Snowflake
 	gRPCServer *grpc.Server
 	mailDialer *gomail.Dialer
@@ -93,15 +96,15 @@ func NewIDP() *IDP {
 
 	// init db
 	idpLogger.Info("IDP init db")
-	var db dbAdapter
+	var dbAdapter db.DBAdapter
 	switch viper.GetString("db.driver") {
 	case "sqlite3":
-		db = newSQLiteDB()
+		dbAdapter = db.NewSQLiteDB()
 	}
-	if err := db.initDB(); err != nil {
+	if err := dbAdapter.InitDB(); err != nil {
 		idpLogger.Fatalf("IDP init db error: %v", err)
 	}
-	idp.db = db
+	idp.dbAdapter = dbAdapter
 
 	// init gomail
 	idpLogger.Info("IDP init gomail")
@@ -241,7 +244,7 @@ func (idp *IDP) Stop() error {
 	}
 
 	if idp.db != nil {
-		if err := idp.db.close(); err != nil {
+		if err := idp.dbAdapter.Close(); err != nil {
 			idpLogger.Errorf("IDP Error stoping services: %s", err)
 			return err
 		}
@@ -278,7 +281,7 @@ func (idp *IDP) Stop() error {
 // check the db whether the username is already has one.
 // return true if has,or return false
 func (idp *IDP) isUserExist(username string) bool {
-	return idp.db.isUserExist(username)
+	return idp.dbAdapter.IsUserExist(username)
 }
 
 // bcrypt md5(password)
@@ -307,44 +310,7 @@ func (idp *IDP) registerUser(user *pb.User) (*pb.User, error) {
 	user.UserID = uuid.NewV1().String()
 	user.Pass = idp.encodePass(user.Pass)
 
-	return idp.db.registerUser(user)
-}
-
-// fetch user though id
-func (idp *IDP) fetchUserByID(userID string) (*pb.User, error) {
-	if userID == "" {
-		return nil, errors.New("invalid params")
-	}
-	return idp.db.fetchUserByID(userID)
-}
-
-// fetch user by email
-func (idp *IDP) fetchUserByEmail(email string) (*pb.User, error) {
-	if email == "" {
-		return nil, errors.New("invalid params")
-	}
-
-	return idp.db.fetchUserByEmail(email)
-}
-
-// fetch user devices using mac address,
-// we support one user can only have different mac address device
-func (idp *IDP) fetchUserDevicesByMac(userID, mac string) ([]*pb.Device, error) {
-	if userID == "" || mac == "" {
-		return nil, errors.New("invalid params")
-	}
-
-	return idp.db.fetchUserDevicesByMac(userID, mac)
-}
-
-// fetch user device using alias
-// one user can have different alias devices
-func (idp *IDP) fetchUserDeviceByAlias(userID, alias string) (*pb.Device, error) {
-	if userID == "" || alias == "" {
-		return nil, errors.New("invalid params")
-	}
-
-	return idp.db.fetchUserDeviceByAlias(userID, alias)
+	return idp.dbAdapter.RegisterUser(user)
 }
 
 // bind a device 2 a user
@@ -356,10 +322,10 @@ func (idp *IDP) bindUserDevice(dev *pb.Device) (*pb.Device, error) {
 	}
 
 	dev.DeviceID = strconv.FormatUint(nextId, 16)
-	return idp.db.bindUserDevice(dev)
+	return idp.dbAdapter.BindUserDevice(dev)
 }
 
 // fetch device using device id
 func (idp *IDP) fetchDeviceByID(deviceID string) (*pb.Device, error) {
-	return idp.db.fetchDeviceByID(deviceID)
+	return idp.dbAdapter.FetchDeviceByID(deviceID)
 }

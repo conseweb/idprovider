@@ -35,8 +35,8 @@ var (
 )
 
 func (idp *IDP) sendCaptchaEmail(email string) error {
-	// only for test, if email contains '@example', just return nil
-	if strings.Contains(email, "@example") {
+	// only for test, if email contains '@example.com', just return nil
+	if strings.Contains(email, "@example.com") {
 		return nil
 	}
 
