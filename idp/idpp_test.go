@@ -19,6 +19,9 @@ package idp
 import (
 	"crypto/x509"
 	"fmt"
+	"runtime"
+	"time"
+
 	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
 	"github.com/conseweb/common/utils"
@@ -27,8 +30,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"gopkg.in/check.v1"
-	"runtime"
-	"time"
 )
 
 // NewClientConnectionWithAddress Returns a new grpc.ClientConn to the given address.
@@ -61,7 +62,7 @@ func (t *TestIDP) TestAcquireCaptchaOK(c *check.C) {
 
 	rsp1, err := t.idppCli.AcquireCaptcha(context.Background(), &pb.AcquireCaptchaReq{
 		SignUpType: pb.SignUpType_MOBILE,
-		SignUp: "13800000000",
+		SignUp:     "13800000000",
 	})
 
 	c.Check(err, check.IsNil)
@@ -122,6 +123,57 @@ func (t *TestIDP) TestRegisterUser(c *check.C) {
 	c.Check(err2, check.IsNil)
 	c.Check(rsp2, check.NotNil)
 	c.Check(rsp2.Error.OK(), check.Equals, false)
+}
+
+func (t *TestIDP) TestLoginUser(c *check.C) {
+	// test1
+	req1 := &pb.RegisterUserReq{
+		SignUpType: pb.SignUpType_EMAIL,
+		SignUp:     "abc@example.com",
+		Nick:       "abc@example.com",
+		Pass:       "abc@example.com",
+	}
+	req1.Wpub = []byte("abc@example.com")
+	priv, err := primitives.NewECDSAKey()
+	c.Check(err, check.IsNil)
+
+	pubraw, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	c.Check(err, check.IsNil)
+	req1.Spub = pubraw
+
+	c.Check(crypto.SignGRPCRequest(req1, priv), check.IsNil)
+	c.Logf("req1: %+v\n", req1)
+
+	rsp1, err1 := t.idppCli.RegisterUser(context.Background(), req1)
+	c.Check(err1, check.IsNil)
+	c.Check(rsp1, check.NotNil)
+	c.Check(rsp1.Error.OK(), check.Equals, true)
+	c.Check(rsp1.User.Nick, check.Equals, "abc@example.com")
+
+	// test2
+	req2 := &pb.LoginUserReq{
+		SignInType: pb.SignInType_SI_EMAIL,
+		SignIn:     "abc@example.com",
+		Password:   "abc@example.com",
+	}
+	c.Check(crypto.SignGRPCRequest(req2, priv), check.IsNil)
+	rsp2, err2 := t.idppCli.LoginUser(context.Background(), req2)
+	c.Check(err2, check.IsNil)
+	c.Check(rsp2, check.NotNil)
+	c.Check(rsp2.Error.OK(), check.Equals, true)
+	c.Check(rsp2.User.Nick, check.Equals, "abc@example.com")
+
+	// test3
+	req3 := &pb.LoginUserReq{
+		SignInType: pb.SignInType_SI_EMAIL,
+		SignIn:     "abc@example.com",
+		Password:   "abc@example.com_err",
+	}
+	c.Check(crypto.SignGRPCRequest(req3, priv), check.IsNil)
+	rsp3, err3 := t.idppCli.LoginUser(context.Background(), req3)
+	c.Check(err3, check.IsNil)
+	c.Check(rsp3, check.NotNil)
+	c.Check(rsp3.Error.OK(), check.Equals, false)
 }
 
 func (t *TestIDP) TestBindUserDevice(c *check.C) {

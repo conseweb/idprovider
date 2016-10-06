@@ -17,6 +17,7 @@ limitations under the License.
 package idp
 
 import (
+	"fmt"
 	"github.com/conseweb/common/crypto"
 	pb "github.com/conseweb/common/protos"
 	"github.com/op/go-logging"
@@ -86,14 +87,14 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	}
 
 	// declaration field
-	var user *pb.User
+	var (
+		user *pb.User
+	)
 
 	// 0. check signature
 	if err := crypto.VerifyGRPCRequest(req, req.Spub); err != nil {
 		idppLogger.Errorf("parsePKIPublicKey error: %v", err)
-
 		rsp.Error = pb.NewError(pb.ErrorType_INVALID_SIGNATURE, err.Error())
-
 		goto RET
 	}
 
@@ -128,6 +129,59 @@ RET:
 	return rsp, nil
 }
 
+// Login a user
+func (idpp *IDPP) LoginUser(ctx context.Context, req *pb.LoginUserReq) (*pb.LoginUserRsp, error) {
+	rsp := &pb.LoginUserRsp{
+		Error: pb.ResponseOK(),
+	}
+
+	// 0. get user info
+	var (
+		user *pb.User
+		err  error
+	)
+	switch req.SignInType {
+	case pb.SignInType_SI_EMAIL:
+		user, err = idpp.idp.dbAdapter.FetchUserByEmail(req.SignIn)
+	case pb.SignInType_SI_MOBILE:
+		user, err = idpp.idp.dbAdapter.FetchUserByMobile(req.SignIn)
+	case pb.SignInType_SI_USERID:
+		user, err = idpp.idp.dbAdapter.FetchUserByID(req.SignIn)
+	default:
+		err = fmt.Errorf("invalid signInType: %v", req.SignInType)
+	}
+	if err != nil {
+		err = fmt.Errorf("user(%s) not existed.", req.SignIn)
+		idppLogger.Warning(err.Error())
+		rsp.Error = pb.NewError(pb.ErrorType_INVALID_SIGN_IN, err.Error())
+		goto RET
+	}
+
+	// 1. check signature
+	if err := crypto.VerifyGRPCRequest(req, user.Spub); err != nil {
+		idppLogger.Errorf("parsePKIPublicKey error: %v", err)
+		rsp.Error = pb.NewError(pb.ErrorType_INVALID_SIGNATURE, err.Error())
+		goto RET
+	}
+
+	// 2. check password
+	if !idpp.idp.verifyPass(req.Password, user.Pass) {
+		rsp.Error = pb.NewError(pb.ErrorType_INVALID_SIGN_IN, "invalid password")
+		goto RET
+	}
+
+	// 3. fetch devices
+	user.Devices, err = idpp.idp.dbAdapter.FetchUserDevices(user.UserID)
+	if err != nil {
+		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
+		goto RET
+	}
+	rsp.User = user
+
+RET:
+	return rsp, nil
+}
+
 // Bind a device for a user
 func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) (*pb.BindDeviceRsp, error) {
 	rsp := &pb.BindDeviceRsp{
@@ -135,7 +189,7 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	}
 
 	// 1. verify user identity
-	if user, err := idpp.idp.fetchUserByID(req.UserID); err != nil {
+	if user, err := idpp.idp.dbAdapter.FetchUserByID(req.UserID); err != nil {
 		idppLogger.Errorf("verify user identity error: %v", err)
 		rsp.Error = pb.NewError(pb.ErrorType_INVALID_USERID, err.Error())
 		goto RET
@@ -152,7 +206,7 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	// if user has another device using same mac address, can't be done.
 	// TODO only farmer require this check?
 	if req.For == pb.DeviceFor_FARMER {
-		if devs, err := idpp.idp.fetchUserDevicesByMac(req.UserID, req.Mac); err == nil && len(devs) > 0 {
+		if dev, err := idpp.idp.dbAdapter.FetchUserDeviceByMac(req.UserID, req.Mac); err == nil && dev != nil && dev.DeviceID != "" {
 			idppLogger.Debugf("user[%s] already has a device using mac: %s", req.UserID, req.Mac)
 			rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE_MAC, "user[%s] already has a device using mac: %s", req.UserID, req.Mac)
 			goto RET
@@ -164,7 +218,7 @@ func (idpp *IDPP) BindDeviceForUser(ctx context.Context, req *pb.BindDeviceReq) 
 	if req.Alias == "" {
 		req.Alias = "default"
 	}
-	if dev, err := idpp.idp.fetchUserDeviceByAlias(req.UserID, req.Alias); err == nil && dev != nil && dev.DeviceID != "" {
+	if dev, err := idpp.idp.dbAdapter.FetchUserDeviceByAlias(req.UserID, req.Alias); err == nil && dev != nil && dev.DeviceID != "" {
 		idppLogger.Debugf("user[%s] already has a device using alias: %s", req.UserID, req.Alias)
 		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_DEVICE_ALIAS, "user[%s] already has a device using alias: %s", req.UserID, req.Alias)
 		goto RET
