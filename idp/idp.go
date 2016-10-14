@@ -187,12 +187,12 @@ func (idp *IDP) populateUserDevicesTable() {
 			wpub = vals[4]
 		}
 
-		user, err := idp.fetchUserByEmail(userEmail)
+		user, err := idp.dbAdapter.FetchUserByEmail(userEmail)
 		if err != nil {
 			continue
 		}
 
-		if dev, err := idp.fetchUserDeviceByAlias(user.UserID, alias); err == nil && dev != nil && dev.DeviceID != "" {
+		if dev, err := idp.dbAdapter.FetchUserDeviceByAlias(user.UserID, alias); err == nil && dev != nil && dev.DeviceID != "" {
 			idpLogger.Warningf("user[%s] already has a device using alias: %s", user.UserID, alias)
 			continue
 		}
