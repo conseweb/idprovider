@@ -65,7 +65,7 @@ func NewSQLiteDB() DBAdapter {
 	}
 }
 
-func (s *SqliteImpl) initDB() error {
+func (s *SqliteImpl) InitDB() error {
 	// create table users
 	DBLogger.Info("sqlite3 create users table")
 	if _, err := s.db.Exec(`
