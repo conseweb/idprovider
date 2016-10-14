@@ -170,3 +170,34 @@ func lowerPrivateIP() (uint64, error) {
 func currentElapsedTime(startTime int64) int64 {
 	return toSnowflakeTime(time.Now()) - startTime
 }
+
+// ParseRole parse id's role
+func ParseRole(id uint64) uint64 {
+	const maskMachineID = uint64(1<<BitLenMachineID - 1)
+	const maskSequence = uint64((1<<BitLenSequence - 1) << BitLenMachineID)
+	const maskTime = uint64((1<<BitLenTime - 1)) << (BitLenSequence + BitLenMachineID)
+	const maskArea = uint64((1<<BitLenArea - 1)) << (BitLenTime + BitLenSequence + BitLenMachineID)
+
+	return id >> (BitLenArea + BitLenTime + BitLenSequence + BitLenMachineID)
+}
+
+//
+//// ParseRole parse id's role
+//func ParseRole(id uint64) (int64, error) {
+//	const maskMachineID = uint64(1<<BitLenMachineID - 1)
+//	const maskSequence = uint64((1<<BitLenSequence - 1) << BitLenMachineID)
+//	const maskTime = uint64((1<<BitLenTime - 1)) << (BitLenSequence + BitLenMachineID)
+//	const maskArea = uint64((1<<BitLenArea - 1)) << (BitLenTime + BitLenSequence + BitLenMachineID)
+//
+//	msb := id >> 63
+//	time := id >> (BitLenSequence + BitLenMachineID)
+//	sequence := id & maskSequence >> BitLenMachineID
+//	machineID := id & maskMachineID
+//	return map[string]uint64{
+//		"id":         id,
+//		"msb":        msb,
+//		"time":       time,
+//		"sequence":   sequence,
+//		"machine-id": machineID,
+//	}
+//}
