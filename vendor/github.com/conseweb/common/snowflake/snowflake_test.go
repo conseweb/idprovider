@@ -35,27 +35,33 @@ type SnowflakeTest struct {
 
 var _ = check.Suite(&SnowflakeTest{})
 
-func (this *SnowflakeTest) SetUpSuite(c *check.C) {
-	t, err := time.Parse("2006/01/02 15:04:05", "2016/08/16 16:35:00")
+func (t *SnowflakeTest) SetUpSuite(c *check.C) {
+	ts, err := time.Parse("2006/01/02 15:04:05", "2016/08/16 16:35:00")
 	c.Check(err, check.IsNil)
 	st := &Settings{
-		StartTime: t,
+		StartTime: ts,
 	}
 
-	this.sf = NewSnowflake(st)
-	c.Check(this.sf, check.NotNil)
+	t.sf = NewSnowflake(st)
+	c.Check(t.sf, check.NotNil)
 
-	this.startTime = toSnowflakeTime(st.StartTime)
+	t.startTime = toSnowflakeTime(st.StartTime)
 	ip, _ := lowerPrivateIP()
-	this.machineID = ip
+	t.machineID = ip
 }
 
-func (this *SnowflakeTest) TestNextID(c *check.C) {
-	_, err := this.sf.NextID(1, 0)
+func (t *SnowflakeTest) TestNextID(c *check.C) {
+	_, err := t.sf.NextID(1, 0)
 	c.Check(err, check.IsNil)
 }
 
-func (this *SnowflakeTest) TestSnowflakeInParallel(c *check.C) {
+func (t *SnowflakeTest) TestParseRole(c *check.C) {
+	id, err := t.sf.NextID(5, 0)
+	c.Check(err, check.IsNil)
+	c.Check(ParseRole(id), check.Equals, uint64(5))
+}
+
+func (t *SnowflakeTest) TestSnowflakeInParallel(c *check.C) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	consumer := make(chan uint64)
@@ -63,7 +69,7 @@ func (this *SnowflakeTest) TestSnowflakeInParallel(c *check.C) {
 	const numID = 10000
 	generate := func() {
 		for i := 0; i < numID; i++ {
-			id, err := this.sf.NextID(1, 0)
+			id, err := t.sf.NextID(1, 0)
 			c.Check(err, check.IsNil)
 
 			consumer <- id
@@ -88,8 +94,8 @@ func (this *SnowflakeTest) TestSnowflakeInParallel(c *check.C) {
 	c.Check(len(ids), check.Equals, numGenerator*numID)
 }
 
-func (this *SnowflakeTest) BenchmarkNextID(c *check.C) {
+func (t *SnowflakeTest) BenchmarkNextID(c *check.C) {
 	for i := 0; i <= c.N; i++ {
-		this.sf.NextID(1, 0)
+		t.sf.NextID(1, 0)
 	}
 }

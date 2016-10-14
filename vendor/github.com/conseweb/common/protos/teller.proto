@@ -25,7 +25,13 @@ service LotteryAPI {
     // returns next lottery info, something about time begin, end etc...
     rpc NextLotteryInfo(NextLotteryInfoReq) returns (NextLotteryInfoRsp) {}
     // receive lottery number form farmer
-    rpc SendLotteryNum(SendLotteryNumReq) returns (SendLotteryNumRsp) {}
+    rpc SendLotteryFx(SendLotteryFxReq) returns (SendLotteryFxRsp) {}
+    // receive lottery number form ledger
+    rpc SendLotteryLx(SendLotteryLxReq) returns (SendLotteryLxRsp) {}
+    // send a command to start new round of lottery immediately
+    rpc StartLottery(StartLotteryReq) returns (StartLotteryRsp) {}
+    // get lottery result to verify or someelse use
+    rpc GetLotteryResult(GetLotteryResultReq) returns (GetLotteryResultRsp) {}
 }
 
 // NextLotteryInfoReq
@@ -38,22 +44,100 @@ message NextLotteryInfoRsp {
     int64 endTime =3;
 }
 
-// LotteryTicket
-message LotteryTicket {
+// storage object of farmer lottery
+message LotteryFx {
+    string fid = 1;
+    uint64 value = 2;
+    // middle R, when teller receive farmer's lottery, so farmer's lottery relate to call queue.
+    uint64 mr = 3;
+    // when handle lottery, calculate the distence between fx and lx, first xx framers will be selected as the ledger's voter
+    // when selected, candidate will be ledger's ids, otherwise nothing
+    repeated string ledgers = 4;
+    uint64 dist = 5;
+}
+
+// storage object of ledger lottery
+message LotteryLx {
+    string lid = 1;
+    uint64 value = 2;
+    // the distence of value and end R
+    uint64 dist = 3;
+    // win a seat for ledger?
+    bool won = 4;
+    // farmers
+    repeated string farmers = 5;
+}
+
+// LotteryFxTicket farmer only
+message LotteryFxTicket {
     string fid = 1;
     uint64 fx = 2;
     uint64 mr = 3;
     int64 idx = 4;
+    string lotteryName = 5;
 }
 
-// SendLotteryNumReq
-message SendLotteryNumReq {
+// SendLotteryFxReq
+message SendLotteryFxReq {
     string fid = 1;
     uint64 fx = 2;
 }
 
-// SendLotteryNumRsp
-message SendLotteryNumRsp {
+// SendLotteryFxRsp
+message SendLotteryFxRsp {
     Error error = 1;
-    LotteryTicket ticket = 2;
+    LotteryFxTicket ticket = 2;
 }
+
+// LotteryLxTicket ledger only
+message LotteryLxTicket {
+    string lid = 1;
+    uint64 lx = 2;
+    string lotteryName = 3;
+}
+
+// SendLotteryLxReq
+message SendLotteryLxReq {
+    string lid = 1;
+    uint64 lx = 2;
+}
+
+// SendLotteryLxRsp
+message SendLotteryLxRsp {
+    Error error = 1;
+    LotteryLxTicket ticket = 2;
+}
+
+// StartLotteryReq
+message StartLotteryReq {
+    // when to start a new round of lottery, is a time utc timestamp, if smaller than NOW more than 1m, using now
+    int64 startUTC = 1;
+    // how long the round of lottery will last, using ms,s,m,h words, such as 30m means 30 minutes
+    string lastInterval = 2;
+}
+
+// StartLotteryRsp
+message StartLotteryRsp {
+    Error error = 1;
+}
+
+// GetLotteryResultReq
+message GetLotteryResultReq {
+    string lotteryName = 1;
+}
+
+// LotteryResult
+message LotteryResult {
+    string name = 1;
+    // farmer lottery list
+    repeated LotteryFx fxs = 2;
+    // ledger lottery list
+    repeated LotteryLx lxs = 3;
+}
+
+// GetLotteryResultRsp
+message GetLotteryResultRsp {
+    Error error = 1;
+    LotteryResult result = 2;
+}
+
