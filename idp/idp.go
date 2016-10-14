@@ -243,7 +243,7 @@ func (idp *IDP) Stop() error {
 		idp.gRPCServer.Stop()
 	}
 
-	if idp.db != nil {
+	if idp.dbAdapter != nil {
 		if err := idp.dbAdapter.Close(); err != nil {
 			idpLogger.Errorf("IDP Error stoping services: %s", err)
 			return err

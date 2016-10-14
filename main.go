@@ -45,7 +45,6 @@ func main() {
 	if err := config.LoadConfig("IDPROVIDER", "idprovider", "github.com/conseweb/idprovider"); err != nil {
 		logger.Fatal(err)
 	}
-
 	flogging.LoggingInit("server")
 
 	// Init the crypto layer
@@ -56,15 +55,14 @@ func main() {
 	ca.CacheConfiguration()
 
 	logger.Infof("CA Server (" + viper.GetString("server.version") + ")")
-
 	aca = ca.NewACA()
 	eca = ca.NewECA(aca)
 	tca = ca.NewTCA(eca)
 	tlsca = ca.NewTLSCA(eca)
 	id = idp.NewIDP()
+	vr = visor.NewVisor()
 
 	runtime.GOMAXPROCS(viper.GetInt("server.gomaxprocs"))
-
 	var opts []grpc.ServerOption
 	if viper.GetBool("server.tls.enabled") {
 		creds, err := credentials.NewServerTLSFromFile(viper.GetString("server.tls.cert.file"), viper.GetString("server.tls.key.file"))
