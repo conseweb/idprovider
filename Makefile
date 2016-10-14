@@ -25,7 +25,7 @@ build:
 	 --name $(BUILD_CONTAINER) \
 	 -v $(PWD):$(INNER_GOPATH)/src/$(PKG) \
 	 -w $(INNER_GOPATH)/src/$(PKG) \
-	 ckeyer/obc:dev go build -o bundles/$(APP) .
+	 ckeyer/obc:dev go build -v -o bundles/$(APP) .
 
 dev:
 	docker run --rm \

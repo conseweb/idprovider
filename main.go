@@ -60,7 +60,6 @@ func main() {
 	tca = ca.NewTCA(eca)
 	tlsca = ca.NewTLSCA(eca)
 	id = idp.NewIDP()
-	vr = visor.NewVisor()
 
 	runtime.GOMAXPROCS(viper.GetInt("server.gomaxprocs"))
 	var opts []grpc.ServerOption
