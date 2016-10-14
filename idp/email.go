@@ -30,7 +30,7 @@ import (
 
 var (
 	captchaHtmlTpl = `
-		<html><body><p>captcha:<span>{{.captcha}}</span></p></body></html>
+		<html><body><p><span>captcha: </span><span style="background-color:#EEE; font-size:18px">{{.captcha}}</span></p></body></html>
 	`
 )
 
