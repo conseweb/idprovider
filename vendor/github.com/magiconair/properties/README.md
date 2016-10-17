@@ -1,4 +1,4 @@
-Overview [![Build Status](https://travis-ci.org/magiconair/properties.png?branch=master)](https://travis-ci.org/magiconair/properties)
+Overview [![Build Status](https://travis-ci.org/magiconair/properties.svg?branch=master)](https://travis-ci.org/magiconair/properties)
 ========
 
 properties is a Go library for reading and writing properties files.
@@ -44,14 +44,12 @@ Installation and Upgrade
 $ go get -u github.com/magiconair/properties
 ```
 
-For testing and debugging you need the [go-check](https://github.com/go-check/check) library
-
-```
-$ go get -u gopkg.in/check.v1
-```
-
 History
 -------
+
+v1.5.6, 18 Oct 2015
+-------------------
+ * Vendored in gopkg.in/check.v1
 
 v1.5.5, 31 Jul 2015
 -------------------

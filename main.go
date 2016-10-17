@@ -22,6 +22,7 @@ import (
 
 	"github.com/conseweb/common/config"
 	"github.com/conseweb/common/exec"
+	"github.com/conseweb/common/liveness"
 	"github.com/conseweb/idprovider/idp"
 	"github.com/hyperledger/fabric/core/crypto"
 	"github.com/hyperledger/fabric/flogging"
@@ -46,6 +47,11 @@ func main() {
 		logger.Fatal(err)
 	}
 	flogging.LoggingInit("server")
+
+	// Init liveness
+	if err := liveness.InitLiveness(); err != nil {
+		logger.Panicf("init liveness return error: %v", err)
+	}
 
 	// Init the crypto layer
 	if err := crypto.Init(); err != nil {
