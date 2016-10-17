@@ -1,0 +1,54 @@
+##############################################################################
+#
+# logging section
+#
+#############################################################################
+logging:
+  liveness: debug
+
+##############################################################################
+#
+# liveness section
+#
+##############################################################################
+liveness:
+  # existing cluster addresses.
+  # if empty, means this node is initial node.
+  # otherwise, at least one address, split by space
+  rootnode: 127.0.0.1
+
+  # node role, can be teller, supervisor, idprovider, office ...
+  role: teller
+
+  # bind address
+  address: 0.0.0.0
+
+  # bind port
+  port: 7946
+
+  # tcptimeout for establishing a TCP connection with a remote node for a full state sync
+  tcptimeout: 30s
+
+  # interval is the interval between complete state syncs.
+  # Complete state syncs are done with a single node over TCP and are
+  # quite expensive relative to standard gossiped messages. Setting this
+  # to zero will disable state push/pull syncs completely.
+  # Setting this interval lower (more frequent) will increase convergence
+  # speeds across larger clusters at the expense of increased bandwidth usage.
+  interval: 30s
+
+  # GossipNodes is the number of random nodes to send gossip messages to
+  # per GossipInterval. Increasing this number causes the gossip messages
+  # to propagate across the cluster more quickly at the expense of
+  # increased bandwidth.
+  gossipNodes: 4
+  gossipInterval: 500ms
+
+  # SecretKey is used to initialize the primary encryption key in a keyring.
+  # The primary encryption key is the only key used to encrypt messages and
+  # the first key used while attempting to decrypt messages. Providing a
+  # value for this primary key will enable message-level encryption and
+  # verification, and automatically install the key onto the keyring.
+  # The value should be either 16, 24, or 32 bytes to select AES-128,
+  # AES-192, or AES-256.
+  secretKey: oY3UlrwWqkWYNlASKyPUf7VQZOzEc2nz
