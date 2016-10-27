@@ -130,7 +130,6 @@ func (s *SqliteImpl) RegisterUser(user *pb.User) (*pb.User, error) {
 		return nil, err
 	}
 
-	DBLogger.Debugf("user registered: %+v", user)
 	return user, nil
 }
 
