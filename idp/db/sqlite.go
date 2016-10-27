@@ -22,11 +22,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"errors"
 	pb "github.com/conseweb/common/protos"
 	"github.com/hyperledger/fabric/flogging"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
-	"errors"
 )
 
 type SqliteImpl struct {
@@ -155,6 +155,7 @@ func (s *SqliteImpl) FetchUserByEmail(email string) (*pb.User, error) {
 
 	u := &pb.User{}
 	if err := s.db.QueryRow("SELECT id, email, mobile, nick, pass, type, wpub, spub FROM users WHERE email = ?", email).Scan(&u.UserID, &u.Email, &u.Mobile, &u.Nick, &u.Pass, &u.UserType, &u.Wpub, &u.Spub); err != nil {
+		DBLogger.Errorf("not found by email: %s", email)
 		return nil, err
 	}
 

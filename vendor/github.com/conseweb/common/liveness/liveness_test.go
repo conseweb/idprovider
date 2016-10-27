@@ -19,7 +19,6 @@ package liveness
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/memberlist"
 	"github.com/spf13/viper"
@@ -54,6 +53,9 @@ func (t *LivenessTest) TestInitLiveness(c *check.C) {
 }
 
 func (t *LivenessTest) TestLivenessMembers(c *check.C) {
-	time.Sleep(time.Millisecond * 500)
 	c.Check(len(LivenessMembers()), check.Equals, 2)
+}
+
+func (t *LivenessTest) TestLivenessRoleMembers(c *check.C) {
+	c.Check(len(LivenessRoleMembers("teller")), check.Equals, 1)
 }
