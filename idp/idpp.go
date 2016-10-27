@@ -107,10 +107,10 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	// 2. register a user
 	user = new(pb.User)
 	switch req.SignUpType {
-	case pb.SignUpType_EMAIL:
-		user.Email = req.SignUp
 	case pb.SignUpType_MOBILE:
 		user.Mobile = req.SignUp
+	default:
+		user.Email = req.SignUp
 	}
 	user.Pass = req.Pass
 	user.Nick = req.Nick
@@ -119,14 +119,14 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	user.Spub = req.Spub
 
 	idppLogger.Debugf("before register user: %#v", user)
-	u, err := idpp.idp.registerUser(user)
-	if err != nil {
+	if u, err := idpp.idp.registerUser(user); err != nil {
 		idppLogger.Debugf("registerUser return error: %v", err)
 		rsp.Error = pb.NewError(pb.ErrorType_INTERNAL_ERROR, err.Error())
 		goto RET
+	} else {
+		idppLogger.Debugf("after register user: %#v", u)
+		rsp.User = u
 	}
-	idppLogger.Debugf("after register user: %#v", u)
-	rsp.User = u
 
 RET:
 	return rsp, nil
