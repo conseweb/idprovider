@@ -30,8 +30,14 @@ var (
 )
 
 type DBAdapter interface {
+
+	// init db, such as create tables
 	InitDB() error
+
+	// check the db whether the username is already has one.
+	// return true if has,or return false
 	IsUserExist(username string) bool
+
 	RegisterUser(user *pb.User) (*pb.User, error)
 	FetchUserByID(userID string) (*pb.User, error)
 	FetchUserByEmail(email string) (*pb.User, error)

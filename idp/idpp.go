@@ -47,7 +47,7 @@ func (idpp *IDPP) AcquireCaptcha(ctx context.Context, req *pb.AcquireCaptchaReq)
 	}
 
 	// 2. verify already user
-	if idpp.idp.isUserExist(req.SignUp) {
+	if idpp.idp.dbAdapter.IsUserExist(req.SignUp) {
 		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_SIGNUP, "%s is already a user", req.SignUp)
 		goto RET
 	}
@@ -99,7 +99,11 @@ func (idpp *IDPP) RegisterUser(ctx context.Context, req *pb.RegisterUserReq) (*p
 	}
 
 	// 1. verify already user
-	if idpp.idp.isUserExist(req.SignUp) {
+	if req.SignUp == "" {
+		rsp.Error = pb.NewError(pb.ErrorType_INVALID_PARAM, "variable signup is blank")
+		goto RET
+	}
+	if req.SignUp != "" && idpp.idp.dbAdapter.IsUserExist(req.SignUp) {
 		rsp.Error = pb.NewErrorf(pb.ErrorType_ALREADY_SIGNUP, "%s is already a user", req.SignUp)
 		goto RET
 	}
