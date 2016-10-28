@@ -105,6 +105,8 @@ func (s *SqliteImpl) InitDB() error {
 	return nil
 }
 
+// check the db whether the username is already has one.
+// return true if has,or return false
 func (s *SqliteImpl) IsUserExist(username string) bool {
 	if username == "" {
 		return false

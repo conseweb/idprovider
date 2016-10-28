@@ -150,7 +150,7 @@ func (idp *IDP) populateUsersTable() {
 			continue
 		}
 
-		if idp.isUserExist(email) {
+		if idp.dbAdapter.IsUserExist(email) {
 			continue
 		}
 
@@ -276,12 +276,6 @@ func (idp *IDP) Stop() error {
 	idpLogger.Info("IDP stopped")
 
 	return nil
-}
-
-// check the db whether the username is already has one.
-// return true if has,or return false
-func (idp *IDP) isUserExist(username string) bool {
-	return idp.dbAdapter.IsUserExist(username)
 }
 
 // bcrypt md5(password)
