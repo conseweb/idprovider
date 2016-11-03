@@ -17,56 +17,56 @@
 		{
 			"checksumSHA1": "NnqAy6yoFzzz299RcM2erqlx2LE=",
 			"path": "github.com/conseweb/common/captcha",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "pPwGXIQpQf9XYGXiT9GFB4xmRuQ=",
 			"path": "github.com/conseweb/common/config",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "75nsHJnYEgt/4ZJjzko2S4H1kzo=",
 			"path": "github.com/conseweb/common/crypto",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "qSRGgAs2u5JbSekAzEeVe5P2F8M=",
 			"path": "github.com/conseweb/common/exec",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "tjxBxQ7PxccjnftfBQHIAKhNDXQ=",
 			"path": "github.com/conseweb/common/liveness",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
-			"checksumSHA1": "vIEiDXaPv00IiannvUjcCR04gZ8=",
+			"checksumSHA1": "V717H13lCC+na+yhtmW5MP3lvZ4=",
 			"path": "github.com/conseweb/common/protos",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "zcEMDfFKUxDvgHY8v7j9uAaj0xM=",
 			"path": "github.com/conseweb/common/semaphore",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "FW6MGi3V941nWzm7z2swmgwHuGo=",
 			"path": "github.com/conseweb/common/snowflake",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "TQnKOevz02B77o5fZr8MroFp4xQ=",
 			"path": "github.com/conseweb/common/utils",
-			"revision": "79d28e9deefe21d629108ab3dc625143a81f8833",
-			"revisionTime": "2016-10-26T09:07:26Z"
+			"revision": "ac7792f50651b80f4e1b5e6b83ba1a39e4e9a4df",
+			"revisionTime": "2016-11-02T09:36:53Z"
 		},
 		{
 			"checksumSHA1": "7kHC8QJD74DCyQRYTxVP5AC4m2k=",
