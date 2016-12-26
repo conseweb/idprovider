@@ -9,7 +9,10 @@ APP := idprovider
 BUILD_CONTAINER := idprovider-$(GIT_COMMIT)
 INNER_GOPATH := /opt/gopath
 
+IMAGE_NAME := hub.conseweb.com:5000/$(APP):$(GIT_BRANCH)
+
 NET := $(shell docker network inspect cknet > /dev/zero && echo "--net cknet --ip 172.16.1.3" || echo "")
+
 
 default: unit-test
 
@@ -44,7 +47,7 @@ build:
 	 ckeyer/obc:dev go build -v -o bundles/$(APP) .
 
 build-image: #build
-	docker build -t conseweb/$(APP):$(GIT_BRANCH) .
+	docker build -t $(IMAGE_NAME) .
 
 dev:
 	docker run --rm \
