@@ -43,6 +43,9 @@ build:
 	 -w $(INNER_GOPATH)/src/$(PKG) \
 	 ckeyer/obc:dev go build -v -o bundles/$(APP) .
 
+build-image: #build
+	docker build -t conseweb/$(APP):$(GIT_BRANCH) .
+
 dev:
 	docker run --rm \
 	 $(NET) \
